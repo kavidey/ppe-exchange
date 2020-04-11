@@ -1,4 +1,4 @@
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from app import app, db
@@ -73,8 +73,8 @@ def verify():
         return redirect(url_for('index'))
     return render_template('verify.html', title='Verify', form=form)
 
-@app.route('/want', methods=['GET', 'POST'])
-def want():
+@app.route('/wants', methods=['GET', 'POST'])
+def wants():
     if not current_user.is_authenticated:
         return redirect(url_for('login',next='/want'))
     hospital = {
@@ -121,8 +121,8 @@ def has():
 
 @app.route('/update_want_need', methods=['GET', 'POST'])
 def update_want_need():
-    if not current_user.is_authenticated:
-        return "login"
     data = json.loads(request.get_data())
     print(data)
-    return "index"
+    if not current_user.is_authenticated:
+        return jsonify(target="login?next="+data['state'])
+    return jsonify(target="index")

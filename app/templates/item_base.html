@@ -27,10 +27,10 @@
                 data: JSON.stringify(data),
                 dataType:'json',
                 success: function(result) {
-                    document.location.href="/"+result;
+                    document.location.href="/"+result.target;
                 },
                 error: function(result) {
-                    document.location.href="/"+result.responseText;
+                    alert("There was an error please reload and try again");
                 }
             });
         }
