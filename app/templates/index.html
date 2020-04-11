@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Hi, {{ current_user.username }} from {{ hospital.hospital_name }} !</h1>
+    <button onclick="redirect('want')">Want</button>
+    <button onclick="redirect('has')">Have</button>
+    <button onclick="redirect('exchange')">Exchange</button>
+    <script>
+        function redirect(url) {
+            document.location.href="/"+url;
+        }
+    </script>
+{% endblock %}

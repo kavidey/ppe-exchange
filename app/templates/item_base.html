@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>{{ hospital.hospital_name }} {{ state }}</h1>
+    {% for item in items %}
+    <div class="items" ><p><b>SKU <span class="sku">{{ item.sku }}</span>:</b> <input class="count" pattern="[0-9]" type="textarea" value="{{ item.count }}"></p> </div>
+    {% endfor %}
+    <button onclick="submit()" >Submit</button>
+    <script>
+        function submit() {
+            var items = [];
+            $('.items').each( function() {
+                items.push({sku: $(this).find(".sku").html(), count: Number($(this).find(".count").val())});
+            });
+
+            for (var i=0; i < items.length; i++) {
+                if (isNaN(items[i].count)) {
+                    alert("Count of SKU: " + items[i].sku +" must be a number");
+                    return NaN
+                }
+            }
+            data = {state: "{{ state }}".toLowerCase(), items: items};
+            $.ajax({
+                url: "/update_want_need",
+                type: "POST",
+                contentType:'application/json',
+                data: JSON.stringify(data),
+                dataType:'json',
+                success: function(result) {
+                    document.location.href="/"+result;
+                },
+                error: function(result) {
+                    document.location.href="/"+result.responseText;
+                }
+            });
+        }
+    </script>
+{% endblock %}
