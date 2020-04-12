@@ -76,3 +76,54 @@ class Has(db.Model):
 
     def __repr__(self):
         return '<Has {}>'.format(self.count)
+
+# EXCHANGE_STATUS
+# normal completion: EXCHANGE_COMPLETE = 1
+EXCHANGE_COMPLETE = 1
+# administrator had to complete: EXCHANGE_COMPLETE_ADMIN = 2
+EXCHANGE_COMPLETE_ADMIN = 2
+# exchange complete, canceled by a hospital: EXCHANGE_COMPLETE_CANCELED = 3
+EXCHANGE_COMPLETE_CANCELED = 3
+
+# exchange has been created, but not verified by parties: EXCHANGE_UNVERIFIED = 11
+EXCHANGE_UNVERIFIED = 11
+# exchange created, verified by parties, but not complete: EXCHANGE_IN_PROGRESS = 12
+EXCHANGE_IN_PROGRESS = 12
+
+class Exchanges(db.Model):
+    __tablename__ = "exchanges"
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.Integer)
+    def __repr__(self):
+        return '<Exchanges {}>'.format(self.id)
+
+# HOSPITAL_EXCHANGE_STATUS
+# exchange has not been accepted by hospital yet: NOT_ACCEPTED = 1
+NOT_ACCEPTED = 1
+# exchange has been accepted by hospitals, but not shipped: ACCEPTED_NOT_SHIPPED = 2
+ACCEPTED_NOT_SHIPPED = 2
+# exchange has been shipped by hospital1, but not received by hospital2: ACCEPTED_SHIPPED = 3
+ACCEPTED_SHIPPED = 3
+# exchange has been shipped by hospital1, and received by hospital2: ACCEPTED_RECEIVED = 4
+ACCEPTED_RECEIVED = 4
+# exchange has been canceled by a hospital: CANCELED = 11
+CANCELED = 11
+
+# exchange has not been shipped/received by hospital: EQUIPMENT_VERIFIED
+class Exchange(db.Model):
+    __tablename__ = "exchange"
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    exchange_id = db.Column(db.Integer, db.ForeignKey('exchanges.id'))
+    hospital1 = db.Column(db.Integer, db.ForeignKey('hospital.id'))
+    hospital1_accept = db.Column(db.Integer)
+    hospital2 = db.Column(db.Integer, db.ForeignKey('hospital.id'))
+    hospital2_accept = db.Column(db.Integer)
+    ppe = db.Column(db.Integer, db.ForeignKey('ppe.id'))
+    count = db.Column(db.Integer)
+    verify_status = db.Column(db.Integer)
+    shipping_status = db.Column(db.Integer)
+    
+    def __repr__(self):
+        return '<Has {}>'.format(self.id)
