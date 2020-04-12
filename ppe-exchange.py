@@ -1,5 +1,5 @@
 from app import app, db
-from app.models import User, Hospital, PPE
+from app.models import User, Hospital, PPE, Wants, Has
 
 
 @app.shell_context_processor

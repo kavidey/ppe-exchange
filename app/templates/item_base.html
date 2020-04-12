@@ -3,7 +3,7 @@
 {% block content %}
     <h1>{{ hospital.hospital_name }} {{ state }}</h1>
     {% for item in items %}
-    <div class="items" ><p><b>SKU <span class="sku">{{ item.sku }}</span>:</b> <input class="count" pattern="[0-9]" type="textarea" value="{{ item.count }}"></p> </div>
+    <div class="items" ><p><b>SKU <span class="sku">{{ item.sku }}</span>:</b> {{ item.desc }}: <img style="width: 200px;" src="{{ item.img }}">: <input class="count" pattern="[0-9]" type="textarea" value="{{ item.count }}"></p> </div>
     {% endfor %}
     <button type="button" class="btn btn-primary"  onclick="submit()" >Submit</button>
     <script>
