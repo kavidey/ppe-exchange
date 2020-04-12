@@ -11,4 +11,11 @@ migrate = Migrate(app, db)
 login = LoginManager(app)
 login.login_view = 'login'
 
+'''
+import logging
+app.logger.disabled = True
+log = logging.getLogger('werkzeug')
+log.disabled = True
+'''
+
 from app import routes, models

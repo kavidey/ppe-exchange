@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Admin SKU</h1>
+    <div id="delete-check" style="background-color:#FFFFFF;position:fixed;width:100%;height:100%;top:0px;left:0px;z-index:1000;">
+        <h1>Are you sure you want to remove SKU <span id="remove-item-name"></span></h1>
+        <div>
+            <button id="yes" onclick="removeSKU()">Yes</button> <button id="no" onclick="hideDeleteCheck()">No</button>
+        </div>
+    </div>
+    <div id="edit" style="background-color:#FFFFFF;position:fixed;width:100%;height:100%;top:0px;left:0px;z-index:1000;">
+        <h1>Edit <span id="edit-item-name"></span></h1>
+        <div>
+            <p>
+                <b>SKU <span id="edit-sku"></span>:</b>
+                <input id="edit-desc" type="textarea" value="">
+                <img id="edit-img" style="width: 200px;" src="">
+                <button id="edit-upload-image">Upload New Image</button>
+                <input onchange="editImportFileandPreview()" accept="image/*" id="edit-file-input" type="file", name="name" style="display: none">
+            </p>
+        </div>
+        <div>
+            <button id="yes" onclick="applyEdits()">Apply Edits</button> <button id="no" onclick="hideEditPage()">Cancel</button>
+        </div>
+    </div>
+    {% for item in items %}
+        <div class="items" >
+            <p>
+                <b>SKU <span class="sku">{{ item.sku }}</span>:</b>{{ item.desc }}
+                <img style="width: 200px;" src="{{ item.img }}">
+                <button id="remove" onclick="checkRemoveSKU('{{ item.sku }}')">Remove</button>
+                <button id="edit" onclick="edit('{{ item.sku }}', '{{ item.desc }}', '{{ item.img }}')">Edit</button>
+            </p>
+        </div>
+    {% endfor %}
+    <br>
+    <div id="add">
+        SKU: <input id="add-sku" type="textarea"> 
+        Description: <input id="add-desc" type="textarea">
+        Upload Image: <button id="add-img">Upload</button> <input onchange="importFileandPreview()" accept="image/*" id="file-input" type="file", name="name" style="display: none"> <img style="width: 200px;" id="show-img"></img> 
+    </div>
+    <button onclick="addSKU()">Add</button>
+    <script>
+        var image_uploaded = false;
+        var edit_image_uploaded = false;
+        var reader  = new FileReader();
+        var edit_reader  = new FileReader();
+        
+        var to_remove = "";
+        var to_edit = "";
+
+
+        $("#delete-check").hide()
+        $("#edit").hide()
+
+        $("#add-img").on('click', function() {
+            $('#file-input').trigger('click');
+        });
+
+        function importFileandPreview() {
+          var file = document.getElementById('file-input').files[0];
+
+          reader.addEventListener("load", function () {
+            image_uploaded = true;
+            $("#show-img").attr('src', reader.result)
+        });
+          if (file) {
+            reader.readAsDataURL(file);
+          }
+        }
+
+        function addSKU() {
+            if ($("#add-sku").val() == "") {
+                alert("Empty SKU");
+                return NaN
+            }
+
+            if ($("#add-desc").val() == "") {
+                alert("Empty description");
+                return NaN
+            }
+
+            if (!image_uploaded) {
+                alert("No image selected");
+                return NaN
+            }
+            item = {
+                "sku": $("#add-sku").val(),
+                "desc": $("#add-desc").val(),
+                "img": reader.result,
+                "task": "add"
+            }
+            $.ajax({
+                url: "/update_admin_sku",
+                type: "POST",
+                contentType:'application/json',
+                data: JSON.stringify(item),
+                dataType:'json',
+                success: function(result) {
+                    location.reload();
+                },
+                error: function(result) {
+                    alert(result.responseText);
+                }
+            });
+            image_uploaded = false;
+        }
+
+        function checkRemoveSKU(sku) {
+            $("#delete-check").show();
+            $("#remove-item-name").text(sku);
+            to_remove = sku;
+        }
+
+        function hideDeleteCheck() {
+            $("#delete-check").hide();
+        }
+
+        function removeSKU() {
+            sku = to_remove;
+            item = {
+                "task": "remove",
+                "sku": sku
+            }
+            $.ajax({
+                url: "/update_admin_sku",
+                type: "POST",
+                contentType:'application/json',
+                data: JSON.stringify(item),
+                dataType:'json',
+                success: function(result) {
+                    location.reload();
+                },
+                error: function(result) {
+                    alert(result.responseText);
+                }
+            });
+        }
+
+        function applyEdits() {
+            edit_image_uploaded = false;
+            $('#edit').hide();
+            item = {
+                "sku": to_edit,
+                "desc": $('#edit-desc').val(),
+                "img": $('#edit-img').attr('src'),
+                "task": "edit"
+            };
+            $.ajax({
+                url: "/update_admin_sku",
+                type: "POST",
+                contentType:'application/json',
+                data: JSON.stringify(item),
+                dataType:'json',
+                success: function(result) {
+                    location.reload();
+                },
+                error: function(result) {
+                    alert(result.responseText);
+                }
+            });
+        }
+
+        function edit(sku, desc, img) {
+            to_edit = sku;
+            $('#edit-sku').html(sku);
+            $('#edit-desc').val(desc);
+            $('#edit-img').attr('src', img);
+            $('#edit').show();
+        }
+
+        $("#edit-upload-image").on('click', function() {
+            $('#edit-file-input').trigger('click');
+        });
+
+        function editImportFileandPreview() {
+            var file = document.getElementById('edit-file-input').files[0];
+
+            edit_reader.addEventListener("load", function () {
+                edit_image_uploaded = true;
+                $('#edit-img').attr('src', edit_reader.result);
+            });
+            if (file) {
+                edit_reader.readAsDataURL(file);
+            }
+        }
+
+        function hideEditPage() {
+            $('#edit').hide();
+        }
+    </script>
+{% endblock %}

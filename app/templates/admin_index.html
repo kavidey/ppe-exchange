@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Hi, {{ current_user.username }}!</h1>
+    <button onclick="redirect('admin_hospital')">Hospitals</button>
+    <button onclick="redirect('admin_sku')">SKUs</button>
+    <button onclick="redirect('admin_exchange')">Exchanges</button>
+    <script>
+        function redirect(url) {
+            document.location.href="/"+url;
+        }
+    </script>
+{% endblock %}
