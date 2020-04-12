@@ -2,6 +2,7 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block content %}
+<div class="content>
     <h1>Sign In</h1>
     <div class="col-md-4">
         <form action="" method="post" novalidate>
@@ -25,4 +26,5 @@
     </form>
     <p>New User? <a href="{{ url_for('register') }}">Click to Register!</a></p>
     </div>
+</div>
 {% endblock %}
