@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Hospitals</h1>
+    <div id="delete-check" style="background-color:#FFFFFF;position:fixed;width:100%;height:100%;top:0px;left:0px;z-index:1000;display: none;">
+        <h1>Are you sure you want to remove Hospital <span id="remove-hospital-name"></span></h1>
+        <div>
+            <button id="yes" onclick="removeHospital()">Yes</button> <button id="no" onclick="hideDeleteCheck()">No</button>
+        </div>
+    </div>
+    <div id="edit" style="background-color:#FFFFFF;position:fixed;width:100%;height:100%;top:0px;left:0px;z-index:1000;display: none;">
+        <h1>Edit <span id="edit-hospital-name"></span></h1>
+        <div>
+            <p>
+                <b>Name:</b><input id="edit-name" type="textarea" value="">
+                <input id="edit-address" type="textarea" value="">
+            </p>
+        </div>
+        <div>
+            <button id="yes" onclick="applyEdits()">Apply Edits</button> <button id="no" onclick="hideEditPage()">Cancel</button>
+        </div>
+    </div>
+
+    <table class="table table-hover">
+            <thead>
+                <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">Address</th>
+                <th scope="col">Changes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <th scope="row">{{ item.id }}</th>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.address }}</td>
+                    <td>
+                            <button id="remove" onclick="checkRemoveHospital('{{ item.id }}', '{{ item.name }}')">Remove</button>
+                            <button id="edit" onclick="edit('{{ item.id }}', '{{ item.name }}', '{{ item.address }}')">Edit</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    <br>
+    <div id="add">
+        Name: <input id="add-name" type="textarea"> 
+        Address: <input id="add-address" type="textarea">
+    </div>
+    <button onclick="addHospital()">Add</button>
+    <script>
+        var to_remove = "";
+        var to_edit = "";
+
+
+        $("#delete-check").hide()
+        $("#edit").hide()
+
+        function addHospital() {
+            if ($("#add-name").val() == "") {
+                alert("Empty name");
+                return NaN
+            }
+
+            item = {
+                "name": $("#add-name").val(),
+                "address": $("#add-address").val(),
+                "task": "add"
+            }
+            $.ajax({
+                url: "/update_admin_hospital",
+                type: "POST",
+                contentType:'application/json',
+                data: JSON.stringify(item),
+                dataType:'json',
+                success: function(result) {
+                    location.reload();
+                },
+                error: function(result) {
+                    alert(result.responseText);
+                }
+            });
+            image_uploaded = false;
+        }
+
+        function checkRemoveHospital(id, name) {
+            $("#delete-check").show();
+            $("#remove-hospital-name").text(name);
+            to_remove = id;
+        }
+
+        function hideDeleteCheck() {
+            $("#delete-check").hide();
+        }
+
+        function removeHospital() {
+            id = to_remove;
+            item = {
+                "task": "remove",
+                "id": id
+            }
+            $.ajax({
+                url: "/update_admin_hospital",
+                type: "POST",
+                contentType:'application/json',
+                data: JSON.stringify(item),
+                dataType:'json',
+                success: function(result) {
+                    location.reload();
+                },
+                error: function(result) {
+                    alert(result.responseText);
+                }
+            });
+        }
+
+        function applyEdits() {
+            $('#edit').hide();
+            item = {
+                "id": to_edit,
+                "name": $('#edit-name').val(),
+                "address": $('#edit-address').val(),
+                "task": "edit"
+            };
+            $.ajax({
+                url: "/update_admin_hospital",
+                type: "POST",
+                contentType:'application/json',
+                data: JSON.stringify(item),
+                dataType:'json',
+                success: function(result) {
+                    location.reload();
+                },
+                error: function(result) {
+                    alert(result.responseText);
+                }
+            });
+        }
+
+        function edit(id, name, address) {
+            to_edit = id;
+            $('#edit-name').val(name);
+            $('#edit-address').val(address);
+            $('#edit').show();
+        }
+
+        function hideEditPage() {
+            $('#edit').hide();
+        }
+    </script>
+{% endblock %}
