@@ -2,14 +2,14 @@
     <head>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
         {% if title %}
-        <title>{{ title }} - Microblog</title>
+        <title>{{ title }} - PPE Exchange</title>
         {% else %}
-        <title>Welcome to Microblog</title>
+        <title>Welcome to PPE Exchange</title>
         {% endif %}
     </head>
     <body>
         <div>
-            Microblog:
+                PPE Exchange:
             <a href="{{ url_for('index') }}">Home</a>
             {% if current_user.is_anonymous %}
             <a href="{{ url_for('login') }}">Login</a>

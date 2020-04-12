@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug import secure_filename
 from app import app, db
-from app.forms import LoginForm, RegistrationForm, VerifyForm
+from app.forms import LoginForm, RegistrationForm, VerifyForm, AdminAuthorizationForm
 from app.models import User, PPE, Hospital, Wants, Has
 
 import json
@@ -17,8 +17,11 @@ def index():
     if user.is_admin:
         return render_template('admin_index.html', title='Home')
     else:
+        user_id = User.query.filter_by(username=current_user.username).first().id
+        user_hospital = Hospital.query.filter_by(user_id=user_id).first()
+        
         hospital = {
-            "hospital_name": "UW"
+            "hospital_name": user_hospital.name
         }
         return render_template('index.html', title='Home', hospital=hospital)
 
@@ -224,3 +227,23 @@ def update_admin_sku():
         record.img = str.encode(data["img"])
         db.session.commit()
     return jsonify(target="index")
+
+@app.route('/admin_auth', methods=['GET', 'POST'])
+def admin_auth():
+    auth_key = {}
+    with open('auth_key.txt') as json_file:
+        auth_key = json.load(json_file)
+    if request.args.get("key") == auth_key["key"]:
+        form  = AdminAuthorizationForm()
+        if form.validate_on_submit():
+            user = User(username="admin", email=auth_key["admin_email"], is_admin=True)
+            user.set_password(form.password.data)
+            User.query.filter_by(username="admin").delete()
+            db.session.add(user)
+            db.session.commit()
+            os.remove("auth_key.txt")
+            flash('Congratulations, you are now a registered administrator!')
+            return redirect(url_for('login'))
+        return render_template('admin_auth.html', title='Admin Setup', form=form)
+    else:
+        return "Invalid Admin Authorization Key"
