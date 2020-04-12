@@ -1,32 +1,48 @@
-<html>
-    <head>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-        {% if title %}
-        <title>{{ title }} - PPE Exchange</title>
-        {% else %}
-        <title>Welcome to PPE Exchange</title>
-        {% endif %}
-    </head>
-    <body>
-        <div>
-                PPE Exchange:
-            <a href="{{ url_for('index') }}">Home</a>
-            {% if current_user.is_anonymous %}
-            <a href="{{ url_for('login') }}">Login</a>
-            {% else %}
-            <a href="{{ url_for('logout') }}">Logout</a>
-            {% endif %}
+{% extends 'bootstrap/base.html' %}
+
+{% block styles %}
+{{super()}}
+<link rel="stylesheet"
+      href="{{url_for('.static', filename='mystyle.css')}}">
+{% endblock %}
+
+{% block html_attribs %} lang="en"{% endblock %}
+
+{% block title %}
+    {% if title %}{{ title }} - PPE-Exchange {% else %}Welcome to PPE-Exchange{% endif %}
+    {% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-default" role="navigation>
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">PPE-Exchange</a>
+    </div>
+    <ul class="nav navbar-nav nav-pills">
+    	<li class="nav-itm">
+	   <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+	</li>
         </div>
-        <hr>
+            {% if current_user.is_anonymous %}
+	          <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+            {% else %}
+      <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+            {% endif %}
+    </ul>
+  </div>
+{% endblock %}
+
+{% block content %}
+        <div class="container">
         {% with messages = get_flashed_messages() %}
         {% if messages %}
-        <ul>
             {% for message in messages %}
-            <li>{{ message }}</li>
+            <div class="alert alert-info" role="alert">{{ message }}</div>
             {% endfor %}
-        </ul>
         {% endif %}
         {% endwith %}
-        {% block content %}{% endblock %}
-    </body>
-</html>
+
+        {% block app_content %}
+
+	{% endblock %}
+{% endblock %}
+

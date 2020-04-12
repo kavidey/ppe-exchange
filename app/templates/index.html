@@ -2,9 +2,9 @@
 
 {% block content %}
     <h1>Hi, {{ current_user.username }} from {{ hospital.hospital_name }} !</h1>
-    <button onclick="redirect('wants')">Want</button>
-    <button onclick="redirect('has')">Have</button>
-    <button onclick="redirect('exchange')">Exchange</button>
+    <button type="button" class="btn btn-primary" onclick="redirect('wants')">Want</button>
+    <button type="button" class="btn btn-success" onclick="redirect('has')">Have</button>
+    <button type="button" class="btn btn-warning" onclick="redirect('exchange')">Exchange</button>
     <script>
         function redirect(url) {
             document.location.href="/"+url;
