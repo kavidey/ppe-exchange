@@ -1,13 +1,15 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="content">
+<div class="content ">
     <h1>{{ hospital.hospital_name }} {{ state }}</h1>
 
    {% for item in items %}
 
-    <img align="left" width="200" src="{{ item.img }}">
-    <div class="container">
+    <div class="container form-container">
+    <div class="image-crop">
+       <img align="left" width="150" src="{{ item.img }}">
+    </div>
       <!-- Horizonatal Form -->
       <div class="row">
         <div class="col-xs-6">
