@@ -10,8 +10,10 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
-    is_admin = db.Column(db.Boolean())
-    hospitals = db.relationship('Hospital', backref='author3', lazy='dynamic')
+    is_admin = db.Column(db.Boolean(), default=False)
+    is_verified = db.Column(db.Boolean(), default=False)
+    verification_key = db.Column(db.String(128))
+    hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id'))
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -30,11 +32,12 @@ class Hospital(db.Model):
     __tablename__ = "hospital"
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    contact = db.Column(db.String(140))
+    contact = db.Column(db.String(140), default="")
+    address = db.Column(db.String(140), default="")
     name = db.Column(db.String(140))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     wants = db.relationship('Wants', backref='author1', lazy='dynamic')
     has = db.relationship('Has', backref='author2', lazy='dynamic')
+    users = db.relationship('User', backref='author3', lazy='dynamic')
 
     def __repr__(self):
         return '<Hospital {}>'.format(self.name)

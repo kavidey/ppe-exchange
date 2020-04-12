@@ -5,6 +5,8 @@ from werkzeug import secure_filename
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, VerifyForm, AdminAuthorizationForm
 from app.models import User, PPE, Hospital, Wants, Has
+from app import crypto
+from app import email
 
 import json
 import os
@@ -67,20 +69,29 @@ def register():
 @app.route('/verify', methods=['GET', 'POST'])
 def verify():
     if not current_user.is_authenticated:
-        return redirect(url_for('login',next='/verify?uid='+request.args.get("uid")))
-    form = VerifyForm()
-    if form.validate_on_submit():
-        '''
-        user = User(username=form.username.data, email=form.email.data)
-        user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
-        '''
-        print("user id:", request.args.get("uid"), "contact:",form.contact.data,"hospital name:", form.hospital_name.data)
-        flash('Congratulations, you are now a verified user!')
-        return redirect(url_for('index'))
-    return render_template('verify.html', title='Verify', form=form)
+        return redirect(url_for('login',next='/verify?key='+request.args.get("key")))
 
+    user = User.query.filter_by(username=current_user.username).first()
+    if request.args.get("key") == user.verification_key:
+        form = VerifyForm()
+        if form.validate_on_submit():
+            # Insert hospital data into database
+            h = Hospital(contact=form.contact.data, name=form.hospital_name.data)
+            db.session.add(h)
+
+            # Mark user as verified
+            q = db.session.query(User)
+            q = q.filter(User.id == user.id)
+            record = q.first()
+            record.is_verified = True
+            record.verification_key = None
+
+            db.session.commit()
+            flash('Congratulations, you are now a verified user!')
+            return redirect(url_for('index'))
+        return render_template('verify.html', title='Verify', form=form)
+    else:
+        return render_template('404.html')
 @app.route('/wants', methods=['GET', 'POST'])
 def wants():
     if not current_user.is_authenticated:
@@ -236,7 +247,7 @@ def admin_auth():
     if request.args.get("key") == auth_key["key"]:
         form  = AdminAuthorizationForm()
         if form.validate_on_submit():
-            user = User(username="admin", email=auth_key["admin_email"], is_admin=True)
+            user = User(username="admin", email=auth_key["admin_email"], is_admin=True, is_verified=True)
             user.set_password(form.password.data)
             User.query.filter_by(username="admin").delete()
             db.session.add(user)
@@ -246,4 +257,108 @@ def admin_auth():
             return redirect(url_for('login'))
         return render_template('admin_auth.html', title='Admin Setup', form=form)
     else:
-        return "Invalid Admin Authorization Key"
+        return render_template('404.html')
+
+@app.route('/admin_users', methods=['GET', 'POST'])
+def admin_users():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login',next='/admin_users'))
+    
+    users = User.query.all()
+    items = []
+    for user in users:
+        user_hospital = None#Hospital.query.filter_by(user_id=user.id).first()
+        item = {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "hospital": "N/A",
+            "contact": "N/A",
+            "is_verified": user.is_verified,
+            "verification_pending": user.verification_key is not None,
+            "is_admin": user.is_admin
+        }
+        if user_hospital is not None:
+            item["hospital"] = user_hospital.name
+            item["contact"] = user_hospital.contact
+        items.append(item)
+    return render_template('admin_users.html', title='Users Dashboard', users=items)
+
+
+@app.route('/update_admin_users', methods=['GET', 'POST'])
+def update_admin_users():
+    data = json.loads(request.get_data())
+    if not current_user.is_authenticated:
+        return jsonify(target="login?next="+data['state'])
+    if data["task"] == "remove":
+        q = db.session.query(User)
+        q = q.filter(User.id == data["user_id"])
+        record = q.first()
+        record.is_verified = False
+        record.verification_key = None
+
+        db.session.commit()
+    elif data["task"] == "verify":
+        q = db.session.query(User)
+        q = q.filter(User.id == data["user_id"])
+        record = q.first()
+        record.is_verified = False
+        key = crypto.generate_key()
+        record.verification_key = key
+        db.session.commit()
+
+        email.send_user_verification(
+            User.query.filter_by(id=data["user_id"]).first().username,
+            key,
+            "localhost:5000",
+            "kaviasher@gmail.com")#'''User.query.filter_by(id=data["user_id"]).first().email''' )
+        
+    elif data["task"] == "cancel":
+        q = db.session.query(User)
+        q = q.filter(User.id == data["user_id"])
+        record = q.first()
+        record.is_verified = False
+        record.verification_key = None
+        db.session.commit()
+    return jsonify(target="index")
+
+
+@app.route('/admin_hospitals', methods=['GET', 'POST'])
+def admin_hospitals():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login',next='/admin_hospitals'))
+
+    hospitals = Hospital.query.all()
+    items = []
+    for item in hospitals:
+        items.append({
+            "id": item.id,
+            "name": item.name,
+            "address": item.address
+        })
+    return render_template('admin_hospitals.html', items=items)
+
+@app.route('/update_admin_hospital', methods=['GET', 'POST'])
+def update_admin_hospital():
+    data = json.loads(request.get_data())
+    if not current_user.is_authenticated:
+        return jsonify(target="login?next=admin_hospital")
+    if data["task"] == "add":
+        q = Hospital.query.filter_by(name = data["name"])
+        if q.count() > 0:
+            return "Hospital already exists"
+        else:
+            h = Hospital(name=data["name"], address=data["address"])
+            db.session.add(h)
+            db.session.commit()
+    elif data["task"] == "remove":
+        Hospital.query.filter_by(id=data["id"]).delete()
+        db.session.commit()
+    elif data["task"] == "edit":
+        q = db.session.query(Hospital)
+        q = q.filter(Hospital.id == data["id"])
+        record = q.first()
+        record.name = data["name"]
+        record.address = data["address"]
+        db.session.commit()
+    return jsonify(target="index")
