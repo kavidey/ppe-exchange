@@ -7,7 +7,7 @@
   integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
   crossorigin="anonymous"></script>
 <link rel="stylesheet"
-      href="{{url_for('.static', filename='mystyle.css')}}">
+      href="{{url_for('.static', filename='style.css')}}">
 {% endblock %}
 
 {% block html_attribs %} lang="en"{% endblock %}
@@ -33,10 +33,11 @@
             {% endif %}
     </ul>
   </div>
+</nav>
 {% endblock %}
 
 {% block content %}
-        <div class="container">
+    <div class="container">
         {% with messages = get_flashed_messages() %}
         {% if messages %}
             {% for message in messages %}
@@ -44,9 +45,9 @@
             {% endfor %}
         {% endif %}
         {% endwith %}
+    </div>
 
         {% block app_content %}
-
 	{% endblock %}
 {% endblock %}
 
