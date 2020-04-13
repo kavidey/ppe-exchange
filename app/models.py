@@ -13,6 +13,8 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean(), default=False)
     is_verified = db.Column(db.Boolean(), default=False)
     verification_key = db.Column(db.String(128))
+    hospital_address = db.Column(db.String(128))
+    hospital_contact = db.Column(db.String(128))
     hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id'))
 
     def __repr__(self):
