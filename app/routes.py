@@ -18,9 +18,11 @@ def index():
     user = User.query.filter_by(username=current_user.username).first()
     if user.is_admin:
         return render_template('admin_index.html', title='Home')
+    elif not user.is_verified:
+        return render_template("404.html")
     else:
-        user_id = User.query.filter_by(username=current_user.username).first().id
-        user_hospital = Hospital.query.filter_by(user_id=user_id).first()
+        user = User.query.filter_by(username=current_user.username).first()
+        user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
         
         hospital = {
             "hospital_name": user_hospital.name
@@ -57,8 +59,15 @@ def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     form = RegistrationForm()
+    form.hospital_name.choices = [(h.id, h.name) for h in Hospital.query.all()]
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data, is_admin=False)
+        user = User(username=form.username.data,
+                    email=form.email.data,
+                    is_admin=False,
+                    is_verified=False,
+                    hospital_address=form.address.data,
+                    hospital_contact=form.contact.data,
+                    hospital_id=form.hospital_name.data)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
@@ -75,18 +84,14 @@ def verify():
     if request.args.get("key") == user.verification_key:
         form = VerifyForm()
         if form.validate_on_submit():
-            # Insert hospital data into database
-            h = Hospital(contact=form.contact.data, name=form.hospital_name.data)
-            db.session.add(h)
-
             # Mark user as verified
             q = db.session.query(User)
             q = q.filter(User.id == user.id)
             record = q.first()
             record.is_verified = True
             record.verification_key = None
-
             db.session.commit()
+
             flash('Congratulations, you are now a verified user!')
             return redirect(url_for('index'))
         return render_template('verify.html', title='Verify', form=form)
@@ -97,8 +102,12 @@ def wants():
     if not current_user.is_authenticated:
         return redirect(url_for('login',next='/wants'))
     
-    user_id = User.query.filter_by(username=current_user.username).first().id
-    user_hospital = Hospital.query.filter_by(user_id=user_id).first()
+    user = User.query.filter_by(username=current_user.username).first()
+    if not user.is_verified:
+        return render_template("404.html")
+    
+    user = User.query.filter_by(username=current_user.username).first()
+    user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
     
     skus = PPE.query.all()
     items = []
@@ -124,9 +133,13 @@ def wants():
 def has():
     if not current_user.is_authenticated:
         return redirect(url_for('login',next='/has'))
-        return redirect(url_for('login',next='/wants'))
-    user_id = User.query.filter_by(username=current_user.username).first().id
-    user_hospital = Hospital.query.filter_by(user_id=user_id).first()
+    
+    user = User.query.filter_by(username=current_user.username).first()
+    if not user.is_verified:
+        return render_template("404.html")
+    
+    user = User.query.filter_by(username=current_user.username).first()
+    user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
     
     skus = PPE.query.all()
     items = []
@@ -154,8 +167,8 @@ def update_want_need():
     if not current_user.is_authenticated:
         return jsonify(target="login?next="+data['state'])
     
-    user_id = User.query.filter_by(username=current_user.username).first().id
-    user_hospital = Hospital.query.filter_by(user_id=user_id).first()
+    user = User.query.filter_by(username=current_user.username).first()
+    user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
 
     if data["state"] == "wants":
         q = db.session.query(Wants)
@@ -267,20 +280,22 @@ def admin_users():
     users = User.query.all()
     items = []
     for user in users:
-        user_hospital = None#Hospital.query.filter_by(user_id=user.id).first()
+        user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
         item = {
             "id": user.id,
             "username": user.username,
             "email": user.email,
             "hospital": "N/A",
             "contact": "N/A",
+            "address": "N/A",
             "is_verified": user.is_verified,
             "verification_pending": user.verification_key is not None,
             "is_admin": user.is_admin
         }
         if user_hospital is not None:
             item["hospital"] = user_hospital.name
-            item["contact"] = user_hospital.contact
+            item["contact"] = user.hospital_contact
+            item["address"] = user.hospital_address
         items.append(item)
     return render_template('admin_users.html', title='Users Dashboard', users=items)
 
@@ -299,12 +314,22 @@ def update_admin_users():
 
         db.session.commit()
     elif data["task"] == "verify":
+        # Set user as generate verification key for user
         q = db.session.query(User)
         q = q.filter(User.id == data["user_id"])
         record = q.first()
         record.is_verified = False
         key = crypto.generate_key()
         record.verification_key = key
+
+        # Update hospitals database
+        user = User.query.filter_by(id=data["user_id"]).first()
+        q = db.session.query(Hospital)
+        q = q.filter(Hospital.id == user.hospital_id)
+        record = q.first()
+        record.address = user.hospital_address
+        record.contact = user.hospital_contact
+        
         db.session.commit()
 
         email.send_user_verification(
