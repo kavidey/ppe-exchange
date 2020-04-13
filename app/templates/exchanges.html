@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+# exchanges logic
+# loop through exchanges
+#   find ones that have this user's hospital id somewhere in the linked exchange --> grab whole "exchanges"
+#   exchange id --> exchanges.id
+#   when created --> exchanges.creation_timestamp
+#   when updated --> exchanges.updated_timestamp
+#   loop through exchanges
+#     print out exchange
+#     print out status
+#     depending on status, show optional button
+
+# Exchange ID   when created    when updated    exchange part 1     status part 1: optional button (verify/shipped/received)
+#                                               exchange part 2     status part 2: optional button
+#                                               ...                 ...
+
+{% block content %}
+    <h1>Exchanges List</h1>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Created</th>
+            <th scope="col">Updated</th>
+            <th scope="col">Exchange</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ex in exchanges %}
+            <tr>
+                <th scope="row">{{ ex.id }}</th>
+                <td>{{ ex.created_timestamp }}</td>
+                <td>{{ ex.updated_timestamp }}</td>
+                <td>
+                    <table>
+                        {% for e in ex.exchanges %}
+                        <tr>
+                            <td>
+                                {{ e.h1_name }} giving {{ e.h2_name }} {{ e.count }} instances of {{ e.ppe }}
+                            </td>
+                            <td>
+                                {% if e.h1 == hospital.hospital_id %}
+                                    {% if !e.is_h1_verified %}
+                                        <button onclick="updateExchange('{{ ex.id }}', 'verify', 1, e.h1)" type="button" class="btn btn-danger btn-sm">Verify</button>
+                                    {% elif !e.is_h2_verified %}
+                                        Waiting for {{ e.h2_name }} to verify
+                                    {% elif !e.is_h1_shipped %}
+                                        <button onclick="updateExchange('{{ ex.id }}', 'shipped', 1, e.h1)" type="button" class="btn btn-danger btn-sm">Shipped</button>
+                                    {% elif !e.is_h2_received %}
+                                        Waiting for {{ e.h2.name }} to receive
+                                {% elif e.h2 == hospital.hospital_id %}
+                                    {% if !e.is_h2_verified %}
+                                        <button onclick="updateExchange('{{ ex.id }}', 'verify', 2, e.h2)" type="button" class="btn btn-danger btn-sm">Verify</button>
+                                    {% elif !e.is_h1_verified %}
+                                        Waiting for {{ e.h1_name }} to verify
+                                    {% elif !e.is_h1_shipped %}
+                                        Waiting for {{ e.h1.name }} to ship
+                                    {% elif !e.is_h2_received %}
+                                        <button onclick="updateExchange('{{ ex.id }}', 'received', 1, e.h1)" type="button" class="btn btn-danger btn-sm">Received</button>
+                                {% else %}
+                                    {% if !e.is_h1_verified %}
+                                        Waiting for {{ e.h1_name }} to verify
+                                    {% if !e.is_h2_verified %}
+                                        Waiting for {{ e.h2_name }} to verify
+                                    {% if !e.is_h2_shipped %}
+                                        Waiting for {{ e.h1_name }} to ship
+                                    {% if !e.is_h2_received %}
+                                        Waiting for {{ e.h2_name }} to receive
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script>
+        function udpateExchange(exchange_id, task) {
+            data = {exchange_id: exchange_id, task: task};
+            $.ajax({
+                url: "/update_exchange",
+                type: "POST",
+                contentType:'application/json',
+                data: JSON.stringify(data),
+                dataType:'json',
+		        success: function(result) {
+                    location.reload();
+                },
+                error: function(result) {
+                    alert("There was an error please reload and try again");
+                }
+            });
+        }
+    </script>
+{% endblock %}

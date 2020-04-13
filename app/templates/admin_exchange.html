@@ -7,6 +7,7 @@
             <tr>
             <th scope="col">ID</th>
             <th scope="col">Created</th>
+            <th scope="col">Updated</th>
             <th scope="col">Exchange</th>
             <th scope="col">Status</th>
             </tr>
@@ -14,35 +15,32 @@
         <tbody>
             {% for ex in exchanges %}
             <tr>
-                <th scope="row">{{ e.id }}</th>
-                <td>{{ ex.timestamp }}</td>
+                <th scope="row">{{ ex.id }}</th>
+                <td>{{ ex.created_timestamp }}</td>
+                <td>{{ ex.updated_timestamp }}</td>
                 <td>
                     <table>
-                        <tr><td>test</td></tr>
-                        <tr><td>test2</td></tr>
+                        {% for e in ex.exchanges %}
+                        <tr><td> {{ e.h1 }} giving {{ e.h2 }} {{ e.count }} instances of {{ e.ppe }}</td></tr>
+                        {% endfor %}
                     </table>
                 </td>
-                <td>{{ ex.status }}</td>
-<!--                
-                <td>{% if user.is_verified %}
-                        Yes <button onclick="editUser('{{ user.id }}', 'remove')" type="button" class="btn btn-danger btn-sm">Remove</button>
-                    {% elif user.verification_pending %}
-                        Pending <button onclick="editUser('{{ user.id }}', 'cancel')" type="button" class="btn btn-danger btn-sm">Cancel</button>
+                <td>{{ ex.status_text }}</td>
+                <td>{% if ex.status>10 %}
+                        <button onclick="cancelExchange('{{ ex.id }}', 'cancel')" type="button" class="btn btn-danger btn-sm">Cancel</button>
                     {% else %}
-                        No <button onclick="editUser('{{ user.id }}', 'verify')" type="button" class="btn btn-success btn-sm">Verify</button>
+                        <P></P>
                     {% endif %}
                 </td>
--->
             </tr>
             {% endfor %}
         </tbody>
     </table>
-
     <script>
-        function editUser(user_id, task) {
-            data = {user_id: user_id, task: task};
+        function cancelExchange(exchange_id, task) {
+            data = {exchange_id: exchange_id, task: task};
             $.ajax({
-                url: "/update_admin_users",
+                url: "/update_admin_exchanges",
                 type: "POST",
                 contentType:'application/json',
                 data: JSON.stringify(data),
