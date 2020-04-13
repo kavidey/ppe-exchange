@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
-from app.models import User
+from app.models import User, Hospital
 
 
 class LoginForm(FlaskForm):
@@ -11,17 +11,19 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
 
 class VerifyForm(FlaskForm):
-    contact = StringField('Contact', validators=[DataRequired()])
-    hospital_name = StringField('Hospital Name', validators=[DataRequired()])
     submit = SubmitField('Verify')
-
+    
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     password2 = PasswordField(
         'Repeat Password', validators=[DataRequired(), EqualTo('password')])
+    hospital_name = SelectField('Hospital', coerce=int)
+    contact = StringField('Phone Number', validators=[DataRequired()])
+    address = StringField('Hospital Address', validators=[DataRequired()])
     submit = SubmitField('Register')
+
 
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()
