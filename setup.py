@@ -20,7 +20,7 @@ app.config.update(mail_settings)
 mail = Mail(app)
 
 hostname = "localhost:5000"
-admin_email = "lionheartkmd@gmail.com"
+admin_email = "aninddey@gmail.com"
 
 if __name__ == '__main__':
     auth_key = ''.join(random.choice(string.ascii_letters + string.digits) for i in range(128))

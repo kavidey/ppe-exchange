@@ -4,9 +4,10 @@ from werkzeug.urls import url_parse
 from werkzeug import secure_filename
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, VerifyForm, AdminAuthorizationForm
-from app.models import User, PPE, Hospital, Wants, Has
+from app.models import User, PPE, Hospital, Wants, Has, Exchanges, Exchange, EXCHANGE_COMPLETE, EXCHANGE_COMPLETE_TEXT, EXCHANGE_COMPLETE_ADMIN, EXCHANGE_COMPLETE_ADMIN_TEXT, EXCHANGE_COMPLETE_HOSPITAL_CANCELED, EXCHANGE_COMPLETE_HOSPITAL_CANCELED_TEXT, EXCHANGE_COMPLETE_ADMIN_CANCELED, EXCHANGE_COMPLETE_ADMIN_CANCELED_TEXT, EXCHANGE_UNVERIFIED, EXCHANGE_UNVERIFIED_TEXT, EXCHANGE_IN_PROGRESS, EXCHANGE_IN_PROGRESS_TEXT, EXCHANGE_NOT_ACCEPTED, EXCHANGE_ACCEPTED_NOT_SHIPPED, EXCHANGE_ACCEPTED_SHIPPED, EXCHANGE_ACCEPTED_RECEIVED, EXCHANGE_HOSPITAL_CANCELED, EXCHANGE_ADMIN_CANCELED
 from app import crypto
 from app import email
+from datetime import datetime
 
 import json
 import os
@@ -210,7 +211,7 @@ def update_want_need():
                 h = Has(hospital_id=user_hospital.id, ppe_id=ppe_id, count=item["count"])
                 db.session.add(h)
         db.session.commit()
-    return jsonify(target="index")
+    return jsonify(target=data['state'])
 
 @app.route('/admin_sku', methods=['GET', 'POST'])
 def admin_sku():
@@ -387,3 +388,127 @@ def update_admin_hospital():
         record.address = data["address"]
         db.session.commit()
     return jsonify(target="index")
+
+@app.route('/admin_exchange', methods=['GET', 'POST'])
+def admin_exchange():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login',next='/admin_exchange'))
+    
+    exchanges = Exchanges.query.all()
+    items = []
+    for ex in exchanges:
+        its = []
+        exchange = Exchange.query.filter_by(exchange_id=ex.id)
+        
+        stat = ""
+        if ex.status==EXCHANGE_COMPLETE:
+            stat=EXCHANGE_COMPLETE_TEXT
+        elif ex.status==EXCHANGE_COMPLETE_ADMIN:
+            stat=EXCHANGE_COMPLETE_ADMIN_TEXT
+        elif ex.status==EXCHANGE_COMPLETE_HOSPITAL_CANCELED:
+            stat=EXCHANGE_COMPLETE_HOSPITAL_CANCELED_TEXT
+        elif ex.status==EXCHANGE_COMPLETE_ADMIN_CANCELED:
+            stat=EXCHANGE_COMPLETE_ADMIN_CANCELED_TEXT
+        elif ex.status==EXCHANGE_IN_PROGRESS:
+            stat=EXCHANGE_IN_PROGRESS_TEXT
+        elif ex.status==EXCHANGE_UNVERIFIED:
+            stat=EXCHANGE_UNVERIFIED_TEXT
+
+        for x in exchange:
+            i = {
+                "h1": Hospital.query.filter_by(id = x.hospital1).first().name,
+                "h2": Hospital.query.filter_by(id = x.hospital2).first().name,
+                "ppe": PPE.query.filter_by(id = x.ppe).first().sku,
+                "count": x.count
+            }
+            its.append(i)
+        item = {
+            "id": ex.id,
+            "created_timestamp": ex.created_timestamp,
+            "updated_timestamp": ex.updated_timestamp,
+            "exchanges": its,
+            "status": ex.status,
+            "status_text": stat
+        }
+        items.append(item)
+    return render_template('admin_exchange.html', title='Exchanges Dashboard', exchanges=items)
+
+@app.route('/update_admin_exchanges', methods=['GET', 'POST'])
+def update_admin_exchanges():
+    data = json.loads(request.get_data())
+    print (data)
+    if not current_user.is_authenticated:
+        return jsonify(target="login?next="+data['state'])
+    if data["task"] == "cancel":
+        q = db.session.query(Exchanges)
+        q = q.filter(Exchanges.id == data["exchange_id"])
+        record = q.first()
+        record.status = EXCHANGE_COMPLETE_ADMIN_CANCELED
+        record.updated_timestamp = datetime.now()
+        exchange = Exchange.query.filter_by(exchange_id=data["exchange_id"])
+        for x in exchange:
+            x.status=EXCHANGE_ADMIN_CANCELED
+        db.session.commit()
+    return jsonify(target="index")
+
+@app.route('/exchanges', methods=['GET', 'POST'])
+def exchanges():
+#    if not current_user.is_authenticated:
+#        return redirect(url_for('login',next='/exchanges'))
+
+#    user_id = User.query.filter_by(username=current_user.username).first().id
+ #   hospital_id = Hospital.query.filter_by(user_id=user_id).first().id
+    hospital_id = 1
+    
+    exchanges = Exchanges.query.all()
+    items = []
+    for ex in exchanges:
+        exchange = Exchanges.query.filter_by(ex.id)
+        good = False
+        its = []
+ 
+        for x in exchange:
+            if x.hospital1==hospital_id:
+                good = True
+            elif x.hospital2==hospital_id:
+                good = True
+        if good:
+            for x in exchange:
+                i = {
+                    "h1_name": Hospital.query.filter_by(id = x.hospital1).first().name,
+                    "h1": x.hospital1,
+                    "h2_name": Hospital.query.filter_by(id = x.hospital2).first().name,
+                    "h2": x.hospital2,
+                    "ppe": PPE.query.filter_by(id = x.ppe).first().sku,
+                    "count": x.count
+                }
+                its.append(i)
+        exchange = Exchange.query.filter_by(hospital1=ex.id) 
+        for x in exchange:
+            items.append({
+                "exchange_sid": ex.id,
+                "exchange_created": ex.created_timestamp,
+                "exchange_updated": ex.updated_timestamp,
+                "exchanges": its,
+            })
+        
+    hospital = {
+        "hospital_name": Hospital.query.filter_by(id=hospital_id).first().name,
+        "hospital_id":hospital_id
+    }
+    return render_template('exchanges.html', title='Exchanges', hospital=hospital, state="Exchange", exchanges=items)
+
+# exchanges logic
+# loop through exchanges
+#   find ones that have this user's hospital id somewhere in the linked exchange --> grab whole "exchanges"
+#   exchange id --> exchanges.id
+#   when created --> exchanges.creation_timestamp
+#   when updated --> exchanges.updated_timestamp
+#   loop through exchanges
+#     print out exchange
+#     print out status
+#     depending on status, show optional button
+
+# Exchange ID   when created    when updated    exchange part 1     status part 1: optional button (verify/shipped/received)
+#                                               exchange part 2     status part 2: optional button
+#                                               ...                 ...
