@@ -2,23 +2,51 @@
 
 {% block content %}
     <h1>Hospitals</h1>
-    <div id="delete-check" style="background-color:#FFFFFF;position:fixed;width:100%;height:100%;top:0px;left:0px;z-index:1000;display: none;">
-        <h1>Are you sure you want to remove Hospital <span id="remove-hospital-name"></span></h1>
-        <div>
-            <button id="yes" onclick="removeHospital()">Yes</button> <button id="no" onclick="hideDeleteCheck()">No</button>
-        </div>
+
+    <div id="delete-check" class="modal" tabindex="-1" role="dialog">
+       <div class="modal-dialog" role="document">
+	 <div class="modal-content">
+	   <div class="modal-header">
+	     <h2 class="modal-title">Remove Confirmation</h2>
+	   </div>
+	   <div class="modal-body">
+             <p>Are you sure you want to remove Hospital <span id="remove-hospital-name"></span></p>
+	   </div>
+	   <div class="modal-footer">
+             <button id="yes" class="btn btn-danger" onclick="removeHospital()">Yes</button>
+	     <button id="no" class="btn btn-primary"  onclick="hideDeleteCheck()">No</button>
+	   </div>	   
+         </div>
+       </div>
     </div>
-    <div id="edit" style="background-color:#FFFFFF;position:fixed;width:100%;height:100%;top:0px;left:0px;z-index:1000;display: none;">
-        <h1>Edit <span id="edit-hospital-name"></span></h1>
-        <div>
-            <p>
-                <b>Name:</b><input id="edit-name" type="textarea" value="">
-                <input id="edit-address" type="textarea" value="">
-            </p>
+
+    <div id="edit" class="modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+	<div class="modal-content">
+	  <div class="modal-header">
+	    <h2 class="modal-title">Edit <span id="edit-hospital-name"></span></h2>
+          </div>
+	  <div class="modal-body">
+            <div class="form-group row padded">
+              <label class="form-check-label col-sm-2 col-form-label" for="add-name"><b>Name:</b></label>
+	      <div class="col-sm-10">
+		<input class="form-control" id="edit-name" type="textarea">
+	      </div>
+	    </div>
+            <div class="form-group row padded">
+	      <label class="form-check-label col-sm-2 col-form-label" for="add-address"><b>Address:</b></label>
+	      <div class="col-sm-10">
+		<input class="form-control" id="edit-address" type="textarea">
+	      </div>
+	    </div>
+	    <br>
+	  </div>
+	  <div class="modal-footer">
+             <button id="yes" class="btn btn-primary" onclick="applyEdits()">Apply Edits</button>
+	     <button id="no" class="btn btn-info" onclick="hideEditPage()">Cancel</button>
+	 </div>	   
         </div>
-        <div>
-            <button id="yes" onclick="applyEdits()">Apply Edits</button> <button id="no" onclick="hideEditPage()">Cancel</button>
-        </div>
+      </div>
     </div>
 
     <table class="table table-hover">
@@ -37,8 +65,8 @@
                     <td>{{ item.name }}</td>
                     <td>{{ item.address }}</td>
                     <td>
-                            <button id="remove" onclick="checkRemoveHospital('{{ item.id }}', '{{ item.name }}')">Remove</button>
-                            <button id="edit" onclick="edit('{{ item.id }}', '{{ item.name }}', '{{ item.address }}')">Edit</button>
+                            <button class="btn btn-danger" id="remove" onclick="checkRemoveHospital('{{ item.id }}', '{{ item.name }}')">Remove</button>
+                            <button id="edit" class="btn btn-primary" onclick="edit('{{ item.id }}', '{{ item.name }}', '{{ item.address }}')">Edit</button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -46,10 +74,21 @@
         </table>
     <br>
     <div id="add">
-        Name: <input id="add-name" type="textarea"> 
-        Address: <input id="add-address" type="textarea">
+        <div class="form-group row padded">
+          <label class="form-check-label col-sm-1 col-form-label" for="add-name"><b>Name:</b></label>
+	      <div class="col-sm-10">
+		<input class="form-control" id="add-name" type="textarea">
+	      </div>
+	</div>
+        <div class="form-group row padded">
+	  <label class="form-check-label col-sm-1 col-form-label" for="add-address"><b>Address:</b></label>
+	      <div class="col-sm-10">
+		<input class="form-control" id="add-address" type="textarea">
+	      </div>
+	</div>
+      <br>
     </div>
-    <button onclick="addHospital()">Add</button>
+    <button class="btn btn-primary" onclick="addHospital()">Add</button>
     <script>
         var to_remove = "";
         var to_edit = "";
@@ -141,6 +180,7 @@
 
         function edit(id, name, address) {
             to_edit = id;
+            $('#edit-hospital-name').text(name);
             $('#edit-name').val(name);
             $('#edit-address').val(address);
             $('#edit').show();
