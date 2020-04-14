@@ -32,11 +32,11 @@
                     {% endif %}
                 </td>
                 <td>{% if user.is_verified %}
-                        Yes <button onclick="editUser('{{ user.id }}', 'remove')" type="button" class="btn btn-danger btn-sm">Remove</button>
+                        <b>Yes: &nbsp;&nbsp;&nbsp;</b> <button onclick="editUser('{{ user.id }}', 'remove')" type="button" class="btn btn-danger btn-sm">Remove</button>
                     {% elif user.verification_pending %}
-                        Pending <button onclick="editUser('{{ user.id }}', 'cancel')" type="button" class="btn btn-danger btn-sm">Cancel</button>
+                       <b>Pending: &nbsp;&nbsp;&nbsp;</b> <button onclick="editUser('{{ user.id }}', 'cancel')" type="button" class="btn btn-danger btn-sm">Cancel</button>
                     {% else %}
-                        No <button onclick="editUser('{{ user.id }}', 'verify')" type="button" class="btn btn-success btn-sm">Verify</button>
+                       <b>No: &nbsp;&nbsp;&nbsp;</b> <button onclick="editUser('{{ user.id }}', 'verify')" type="button" class="btn btn-success btn-sm">Verify</button>
                     {% endif %}
                 </td>
             </tr>
