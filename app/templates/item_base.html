@@ -9,15 +9,15 @@
     <div class="container bg-light">
         <div class="row">
             <div class="col">
-              <img width="150" src="{{ item.img }}" align="right">
+              <img class="itmimg" width="150" src="{{ item.img }}" align="left">
             </div>
             <div class="col">
               <div class="row">
                 <p><b>SKU <span id="sku">{{ item.sku }}</span></b> {{ item.desc }}<br>
 Count
-                  <input type="text" pattern="[0-9]" class="count" placeholder="{{ item.count }}" />
+                  <input class="form-control" type="text" pattern="[0-9]" class="count" placeholder="{{ item.count }}" />
 		  <br>
-                <button onclick="submit()"	>Update Count</button>
+                <button onclick="submit()" class="btn btn-primary">Update Count</button>
 		</p>
               </div>
             </div>

@@ -1,9 +1,9 @@
 html { font-family: sans-serif; background: #eee; padding: 1rem; }
 body { max-width: 960px; margin: 0 auto;  }
-h1 { font-family: serif; color: #377ba8; margin: 1rem 0; padding: 1rem; }
+h1 {  color: #377ba8; margin: 1rem 0; padding: 1rem; }
 a { color: #377ba8; }
 hr { border: none; border-top: 1px solid lightgray; }
-p { padding: 1rem; }
+p { padding: 1rem; font-size: medium}
 nav { background: lightgray; display: flex; align-items: center; padding: 0 0.5rem; }
 nav h1 { flex: auto; margin: 0; }
 nav h1 a { text-decoration: none; padding: 0.25rem 0.5rem; }
@@ -12,12 +12,21 @@ nav ul li a, nav ul li span, header .action { display: block; padding: 3rem; }
 .row {
     background:#f8f8f8 !important;
     border: lightgray !important;
-    margin-right: 3rem;
-    padding-left: 2rem;
     padding-right: 2rem;
-    margin-bottom: 2rem;
     max-width: 940px;
+    margin: 0;
 }
+.container {
+    padding: 1rem;
+}
+.itmimg {
+    padding: 2rem;
+}
+.form-control {
+    display:inline;
+    width:auto;
+}
+
 .image-crop {max-width: 200px; max-height 100px; overlfow: hidden; margin: 1rem; }
 .content { padding: 0 1rem 1rem;}
 .content > header { border-bottom: 1px solid lightgray; display: flex; align-items: flex-end; }
