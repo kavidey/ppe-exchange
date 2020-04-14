@@ -211,7 +211,7 @@ def update_want_need():
                 h = Has(hospital_id=user_hospital.id, ppe_id=ppe_id, count=item["count"])
                 db.session.add(h)
         db.session.commit()
-    return jsonify(target="index")
+    return jsonify(target=data['state'])
 
 @app.route('/admin_sku', methods=['GET', 'POST'])
 def admin_sku():

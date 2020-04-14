@@ -14,40 +14,43 @@
 
 {% block title %}
     {% if title %}{{ title }} - PPE-Exchange {% else %}Welcome to PPE-Exchange{% endif %}
-    {% endblock %}
+{% endblock %}
 
 {% block navbar %}
 <nav class="navbar navbar-default" role="navigation">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="#">PPE-Exchange</a>
-    </div>
+  <div class="navbar-header">
+    <a class="navbar-brand" href="">PPE-Exchange</a>
+  </div>
+  <div>
     <ul class="nav navbar-nav nav-pills">
     	<li class="nav-itm">
-	   <a class="nav-link" href="{{ url_for('index') }}">Home</a>
-	</li>
-        </div>
-            {% if current_user.is_anonymous %}
-	          <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
-            {% else %}
-      <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
-            {% endif %}
+	      <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+	    </li>
+        {% if current_user.is_anonymous %}
+        <li class="nav-item">
+          <a class="nav-link" href="/login">Login</a>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="/logout">Logout</a>
+        </li>
+        {% endif %}
     </ul>
   </div>
 </nav>
 {% endblock %}
 
 {% block content %}
-    <div class="container">
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-info" role="alert">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-        {% endwith %}
-    </div>
-
-        {% block app_content %}
+  <div class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+          {% for message in messages %}
+          <div class="alert alert-info" role="alert">{{ message }}</div>
+          {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+  {% block app_content %}
 	{% endblock %}
 {% endblock %}
 

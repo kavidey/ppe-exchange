@@ -1,66 +1,69 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="content ">
+<div class="content">
     <h1>{{ hospital.hospital_name }} {{ state }}</h1>
 
    {% for item in items %}
 
-    <div class="container form-container">
-    <div class="image-crop">
-       <img align="left" width="150" src="{{ item.img }}">
-    </div>
-      <!-- Horizonatal Form -->
-      <div class="row">
-        <div class="col-xs-6">
-          <form class="form-horizontal">
-            <div class="form-group">
-              <label for="sku" class="col-xs-3">SKU  {{ item.sku }}</label>
-              <label class="not-bold col-xs-5" id="sku">{{ item.desc }}" </label><br>
-	    </div>
-	    <div class="form-group">
-              <label for="count" class="col-xs-3">Count</label>
-              <div class="col-xs-5">
-                <input type="text" pattern="[0-9]" class="form-control" id="count" placeholder="{{ item.count }}" />
-              </div>
-         <div class="col-xs-5">
-            <button type="button" class="btn btn-primary"  onclick="submit()"	>Update Count</button>
-
-	   </form>
+    <div class="container bg-light">
+        <div class="row">
+            <div class="col">
+                    <img width="150" src="{{ item.img }}">
+            </div>
+            <div class="col">
+                <div class="row">
+                        <p><b>SKU <span id="sku">{{ item.sku }}</span></b> {{ item.desc }}</p>
+                </div>
+                <div class="row">
+                        <p>Count</p>
+                        <input type="text" pattern="[0-9]" class="count" placeholder="{{ item.count }}" />
+                </div>
+                <div cass="row">
+                    <button onclick="submit()"	>Update Count</button>
+                </div>
             </div>
         </div>
-      </div>
     </div>
-   </div>
     {% endfor %}
 </div>
-    <script>
-        function submit() {
-            var items = [];
-            $('.items').each( function() {
-                items.push({sku: $(this).find(".sku").html(), count: Number($(this).find(".count").val())});
-            });
-
-            for (var i=0; i < items.length; i++) {
-                if (isNaN(items[i].count)) {
-                    alert("Count of SKU: " + items[i].sku +" must be a number");
-                    return NaN
-                }
+<script>
+    function submit() {
+        var items = [];
+        $('.container').each( function() {
+            var count_input = $(this).find(".count");
+            var count = count_input.val();
+            if (count_input.val() == "") {
+                count = count_input.attr('placeholder')
             }
-            data = {state: "{{ state }}".toLowerCase(), items: items};
-            $.ajax({
-                url: "/update_want_need",
-                type: "POST",
-                contentType:'application/json',
-                data: JSON.stringify(data),
-                dataType:'json',
-		                success: function(result) {
-                    document.location.href="/"+result.target;
-                },
-                error: function(result) {
-                    alert("There was an error please reload and try again");
-                }
-            });
+            items.push({sku: $(this).find("#sku").html(), count: Number(count)});
+        });
+
+        console.log(items)
+
+        for (var i=0; i < items.length; i++) {
+            if (isNaN(items[i].count)) {
+                alert("Count of SKU: " + items[i].sku +" must be a number");
+                return NaN
+            }
         }
-    </script>
+
+        data = {state: "{{ state }}".toLowerCase(), items: items};
+        console.log(data);
+        $.ajax({
+            url: "/update_want_need",
+            type: "POST",
+            contentType:'application/json',
+            data: JSON.stringify(data),
+            dataType:'json',
+            success: function(result) {
+                document.location.href="/"+result.target;
+            },
+            error: function(result) {
+                alert("There was an error please reload and try again");
+            }
+        });
+        return false;
+    }
+</script>
 {% endblock %}
