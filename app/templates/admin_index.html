@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block app_content %}
 <div class="content">
     <h1>Hi, {{ current_user.username }}!</h1>
     <button class="btn btn-primary" onclick="redirect('admin_users')">Users</button>
-    <button class="btn btn-primary" onclick="redirect('admin_hospitals')">Hospitals</button>
-    <button class="btn btn-primary" onclick="redirect('admin_sku')">SKUs</button>
-    <button class="btn btn-primary" onclick="redirect('admin_exchange')">Exchanges</button>
+    <button class="btn btn-info" onclick="redirect('admin_hospitals')">Hospitals</button>
+    <button class="btn btn-success" onclick="redirect('admin_sku')">SKUs</button>
+    <button class="btn btn-warning" onclick="redirect('admin_exchange')">Exchanges</button>
 </div>
     <script>
         function redirect(url) {

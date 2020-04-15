@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block app_content %}
 <div class="content">
     <h1>User and Hospital List</h1>
     <table class="table table-hover">
@@ -32,11 +32,11 @@
                     {% endif %}
                 </td>
                 <td>{% if user.is_verified %}
-                        <b>Yes: &nbsp;&nbsp;&nbsp;</b> <button onclick="editUser('{{ user.id }}', 'remove')" type="button" class="btn btn-danger btn-sm">Remove</button>
+                        <b>Yes: &nbsp;&nbsp;&nbsp;</b> <button id="button-{{ user.id }}" type="button" class="btn btn-danger btn-sm" {% if not user.is_admin%} onclick="editUser('{{ user.id }}', 'remove')" {% else %} disabled {% endif %}>Remove</button>
                     {% elif user.verification_pending %}
-                       <b>Pending: &nbsp;&nbsp;&nbsp;</b> <button onclick="editUser('{{ user.id }}', 'cancel')" type="button" class="btn btn-danger btn-sm">Cancel</button>
+                       <b>Pending: &nbsp;&nbsp;&nbsp;</b> <button id="button-{{ user.id }}" onclick="editUser('{{ user.id }}', 'cancel')" type="button" class="btn btn-danger btn-sm">Cancel</button>
                     {% else %}
-                       <b>No: &nbsp;&nbsp;&nbsp;</b> <button onclick="editUser('{{ user.id }}', 'verify')" type="button" class="btn btn-success btn-sm">Verify</button>
+                       <b>No: &nbsp;&nbsp;&nbsp;</b> <button id="button-{{ user.id }}" onclick="editUser('{{ user.id }}', 'verify')" type="button" class="btn btn-success btn-sm">Verify</button>
                     {% endif %}
                 </td>
             </tr>
@@ -46,6 +46,11 @@
     <script>
         function editUser(user_id, task) {
             data = {user_id: user_id, task: task};
+
+            var button = $("#button-"+String(user_id));
+            button.attr("onclick", "");
+            button.prop("disabled", true);
+
             $.ajax({
                 url: "/update_admin_users",
                 type: "POST",

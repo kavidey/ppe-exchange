@@ -96,6 +96,8 @@ def verify():
             flash('Congratulations, you are now a verified user!')
             return redirect(url_for('index'))
         return render_template('verify.html', title='Verify', form=form)
+    elif user.is_verified:
+        return redirect(url_for("index"))
     else:
         return render_template('404.html')
 @app.route('/wants', methods=['GET', 'POST'])
