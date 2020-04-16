@@ -2,6 +2,24 @@
 
 {% block app_content %}
     <h1>Exchanges List</h1>
+
+    <div id="delete-check" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Cancel Confirmation</h2>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel Exchange <span id="remove-item-name"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button id="yes" class="btn btn-danger" onclick="removeExchange()">Yes</button>
+                    <button id="no" class="btn btn-primary"  onclick="hideDeleteCheck()">No</button>
+                </div>	   
+            </div>
+        </div>
+     </div>
+
     <table class="table table-hover">
         <thead>
             <tr>
@@ -37,8 +55,16 @@
         </tbody>
     </table>
     <script>
+        var data = {};
+        $("#delete-check").hide()
+
         function cancelExchange(exchange_id, task) {
             data = {exchange_id: exchange_id, task: task};
+            $("#delete-check").show();
+            $("#remove-item-name").text(exchange_id);
+        }
+ 
+        function removeExchange() {
             $.ajax({
                 url: "/update_admin_exchanges",
                 type: "POST",
@@ -53,5 +79,10 @@
                 }
             });
         }
+
+        function hideDeleteCheck() {
+            $("#delete-check").hide();
+        }
+
     </script>
 {% endblock %}

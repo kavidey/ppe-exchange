@@ -17,6 +17,24 @@
 
 {% block app_content %}
     <h1>Exchanges List</h1>
+
+    <div id="delete-check" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Cancel Confirmation</h2>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel Exchange <span id="remove-item-name"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button id="yes" class="btn btn-danger" onclick="updateExchange2()">Yes</button>
+                    <button id="no" class="btn btn-primary"  onclick="hideDeleteCheck()">No</button>
+                </div>	   
+            </div>
+        </div>
+     </div>
+
     <table class="table table-hover">
         <thead>
             <tr>
@@ -30,12 +48,13 @@
         <tbody>
             {% for ex in exchanges %}
             <tr>
-                <td> <b> {{ ex.exchange_sid }} </b></td>
-                <td> {{ ex.exchange_created.replace(microsecond=0) }} </td>
-                <td> {{ ex.exchange_updated.replace(microsecond=0) }} </td>
+                <td> <p><b> {{ ex.exchange_sid }} </b></p></td>
+                <td> <p> {{ ex.exchange_created.replace(microsecond=0) }} </p></td>
+                <td> <p>{{ ex.exchange_updated.replace(microsecond=0) }} </p></td>
                 <td>
                         {% for e in ex.exchanges %}
-                        <p style="margin: 0.8em;">{{ e.h1_name }} giving {{ e.h2_name }} {{ e.count }} instances of {{ e.ppe }}<br></p>
+                        <p style="margin: 0.8em;">
+                        {{ e.h1_name }} giving {{ e.h2_name }} {{ e.count }} instances of {{ e.ppe }}<br></p>
                         {% endfor %}
                 </td>
                     
@@ -49,10 +68,10 @@
                         {% else %}
                             {% if not ex.verify1 %}
                                     <button onclick="updateExchange('{{ ex.exchange_sid }}', 'verify', 0, 1, '{{ hospital.hospital_id }}') "type="button" class="btn btn-success btn-sm">Verify</button>
-                                    <button onclick="updateExchange('{{ ex.exchange_sid }}', 'cancel', 0, 1, '{{ hospital.hospital_id }}') "type="button" class="btn btn-danger btn-sm">Cancel</button> 
+                                    <button onclick="deleteCheck('{{ ex.exchange_sid }}', 'cancel', 0, 1, '{{ hospital.hospital_id }}') "type="button" class="btn btn-danger btn-sm">Cancel</button> 
                             {% elif not ex.verify2 %}
                                     <button onclick="updateExchange('{{ ex.exchange_sid }}', 'verify', 0, 2, '{{ hospital.hospital_id }}') "type="button" class="btn btn-success btn-sm">Verify</button>
-                                    <button onclick="updateExchange('{{ ex.exchange_sid }}', 'cancel', 0, 2, '{{ hospital.hospital_id }}') "type="button" class="btn btn-danger btn-sm">Cancel</button>
+                                    <button onclick="deleteCheck('{{ ex.exchange_sid }}', 'cancel', 0, 2, '{{ hospital.hospital_id }}') "type="button" class="btn btn-danger btn-sm">Cancel</button>
                             {% else %}
                                 {% for e in ex.exchanges %}
                                         {% if e.h1 == hospital.hospital_id %}
@@ -98,6 +117,33 @@
         </tbody>
     </table>
     <script>
+
+        var data = {};
+        $("#delete-check").hide()
+
+        function deleteCheck(exchange_id, task, e_id, number, hospital_id) {
+            data = {exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id:hospital_id};
+            $("#delete-check").show();
+            $("#remove-item-name").text(exchange_id);
+        }
+
+        function updateExchange2() {
+            $.ajax({
+                url: "/update_exchange",
+                type: "POST",
+                contentType:'application/json',
+                data: JSON.stringify(data),
+                dataType:'json',
+		        success: function(result) {
+                    location.reload();
+                },
+                error: function(result) {
+                    alert("There was an error please reload and try again");
+                }
+            });
+        }
+
+
         function updateExchange(exchange_id, task, e_id, number, hospital_id) {
             data = {exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id:hospital_id};
             $.ajax({
@@ -113,6 +159,10 @@
                     alert("There was an error please reload and try again");
                 }
             });
+        }
+
+        function hideDeleteCheck() {
+            $("#delete-check").hide();
         }
     </script>
 {% endblock %}
