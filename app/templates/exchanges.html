@@ -24,62 +24,82 @@
             <th scope="col">Created</th>
             <th scope="col">Updated</th>
             <th scope="col">Exchange</th>
+            <th scope="col">Status</th>
             </tr>
         </thead>
         <tbody>
             {% for ex in exchanges %}
             <tr>
-                <th scope="row">{{ ex.id }}</th>
-                <td>{{ ex.created_timestamp }}</td>
-                <td>{{ ex.updated_timestamp }}</td>
+                <td> <b> {{ ex.exchange_sid }} </b></td>
+                <td> {{ ex.exchange_created.replace(microsecond=0) }} </td>
+                <td> {{ ex.exchange_updated.replace(microsecond=0) }} </td>
                 <td>
-                    <table>
                         {% for e in ex.exchanges %}
-                        <tr>
-                            <td>
-                                {{ e.h1_name }} giving {{ e.h2_name }} {{ e.count }} instances of {{ e.ppe }}
-                            </td>
-                            <td>
-                                {% if e.h1 == hospital.hospital_id %}
-                                    {% if !e.is_h1_verified %}
-                                        <button onclick="updateExchange('{{ ex.id }}', 'verify', 1, e.h1)" type="button" class="btn btn-danger btn-sm">Verify</button>
-                                    {% elif !e.is_h2_verified %}
-                                        Waiting for {{ e.h2_name }} to verify
-                                    {% elif !e.is_h1_shipped %}
-                                        <button onclick="updateExchange('{{ ex.id }}', 'shipped', 1, e.h1)" type="button" class="btn btn-danger btn-sm">Shipped</button>
-                                    {% elif !e.is_h2_received %}
-                                        Waiting for {{ e.h2.name }} to receive
-                                {% elif e.h2 == hospital.hospital_id %}
-                                    {% if !e.is_h2_verified %}
-                                        <button onclick="updateExchange('{{ ex.id }}', 'verify', 2, e.h2)" type="button" class="btn btn-danger btn-sm">Verify</button>
-                                    {% elif !e.is_h1_verified %}
-                                        Waiting for {{ e.h1_name }} to verify
-                                    {% elif !e.is_h1_shipped %}
-                                        Waiting for {{ e.h1.name }} to ship
-                                    {% elif !e.is_h2_received %}
-                                        <button onclick="updateExchange('{{ ex.id }}', 'received', 1, e.h1)" type="button" class="btn btn-danger btn-sm">Received</button>
-                                {% else %}
-                                    {% if !e.is_h1_verified %}
-                                        Waiting for {{ e.h1_name }} to verify
-                                    {% if !e.is_h2_verified %}
-                                        Waiting for {{ e.h2_name }} to verify
-                                    {% if !e.is_h2_shipped %}
-                                        Waiting for {{ e.h1_name }} to ship
-                                    {% if !e.is_h2_received %}
-                                        Waiting for {{ e.h2_name }} to receive
-                                {% endif %}
-                            </td>
-                        </tr>
+                        <p style="margin: 0.8em;">{{ e.h1_name }} giving {{ e.h2_name }} {{ e.count }} instances of {{ e.ppe }}<br></p>
                         {% endfor %}
-                    </table>
+                </td>
+                    
+                <td>
+                        {% if ex.exchange_status == 4 %}
+                            Exchange canceled by exchange administrator
+                        {% elif ex.exchange_status == 3 %}
+                            Exchange canceled by hospital
+                        {% elif ex.exchange_status == 1 %}
+                            Exchange complete
+                        {% else %}
+                            {% if not ex.verify1 %}
+                                    <button onclick="updateExchange('{{ ex.exchange_sid }}', 'verify', 0, 1, '{{ hospital.hospital_id }}') "type="button" class="btn btn-success btn-sm">Verify</button>
+                                    <button onclick="updateExchange('{{ ex.exchange_sid }}', 'cancel', 0, 1, '{{ hospital.hospital_id }}') "type="button" class="btn btn-danger btn-sm">Cancel</button> 
+                            {% elif not ex.verify2 %}
+                                    <button onclick="updateExchange('{{ ex.exchange_sid }}', 'verify', 0, 2, '{{ hospital.hospital_id }}') "type="button" class="btn btn-success btn-sm">Verify</button>
+                                    <button onclick="updateExchange('{{ ex.exchange_sid }}', 'cancel', 0, 2, '{{ hospital.hospital_id }}') "type="button" class="btn btn-danger btn-sm">Cancel</button>
+                            {% else %}
+                                {% for e in ex.exchanges %}
+                                        {% if e.h1 == hospital.hospital_id %}
+                                            {% if ex.verify1 %}
+                                                {% if not e.is_verified %}
+                                                    <p style="margin-top: 0.8em;">Waiting for {{ e.h2_name }} to verify<br></p>
+                                                {% elif not e.is_shipped %}
+                                                    <button style="margin: 0.25em;" onclick="updateExchange('{{ ex.exchange_sid }}', 'shipped', '{{ e.id }}', 1, '{{ e.h1 }}') "type="button" class="btn btn-success btn-sm">Shipped</button><br>
+                                                {% elif not e.is_received %}
+                                                    <p style="margin-top: 0.8em;">Waiting for {{ e.h2_name }} to receive<br></p>
+                                                {% else %}
+                                                    <p style="margin-top: 0.8em;">Exchange complete<br></p>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% elif e.h2 == hospital.hospital_id %}
+                                            {% if ex.verify2 %}
+                                                {% if not e.is_verified %}
+                                                    <p style="margin-top: 0.8em;">Waiting for {{ e.h1_name }} to verify<br></p>
+                                                {% elif not e.is_shipped %}
+                                                    <p style="margin-top: 0.8em;">Waiting for {{ e.h1_name }} to ship<br></p>
+                                                {% elif not e.is_received %}
+                                                    {{ ex.id }}, received, {{ e.id }}
+                                                    <button style="margin: 0.25em;" onclick="updateExchange('{{ ex.exchange_sid }}', 'received', '{{ e.id }}', 2, '{{ e.h2 }}') "type="button" class="btn btn-success btn-sm">Received</button><br>
+                                                {% else %}
+                                                    <p style="margin-top: 0.8em;">Exchange complete<br></p>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% else %}
+                                            {% if e.is_verified == False %}
+                                                <p style="margin-top: 0.8em;">Waiting for verification<br></p>
+                                            {% elif not e.is_shipped %}
+                                                <p style="margin-top: 0.8em;">Waiting for shipment<br></p>
+                                            {% elif not e.is_received %}
+                                                <p style="margin-top: 0.8em;">Waiting for receipt<br></p>
+                                            {% endif %}
+                                        {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endif %}
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     <script>
-        function udpateExchange(exchange_id, task) {
-            data = {exchange_id: exchange_id, task: task};
+        function updateExchange(exchange_id, task, e_id, number, hospital_id) {
+            data = {exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id:hospital_id};
             $.ajax({
                 url: "/update_exchange",
                 type: "POST",

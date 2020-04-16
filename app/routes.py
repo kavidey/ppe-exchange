@@ -337,7 +337,7 @@ def update_admin_users():
             User.query.filter_by(id=data["user_id"]).first().username,
             key,
             "localhost:5000",
-            "kaviasher@gmail.com")#'''User.query.filter_by(id=data["user_id"]).first().email''' )
+            User.query.filter_by(id=data["user_id"]).first().email)
         
     elif data["task"] == "cancel":
         q = db.session.query(User)
@@ -395,6 +395,7 @@ def admin_exchange():
         return redirect(url_for('login',next='/admin_exchange'))
     
     exchanges = Exchanges.query.all()
+    print(len(exchanges))
     items = []
     for ex in exchanges:
         its = []
@@ -441,12 +442,13 @@ def update_admin_exchanges():
         return jsonify(target="login?next="+data['state'])
     if data["task"] == "cancel":
         q = db.session.query(Exchanges)
-        q = q.filter(Exchanges.id == data["exchange_id"])
+        q = q.filter(Exchanges.id==(int(data["exchange_id"])))
         record = q.first()
         record.status = EXCHANGE_COMPLETE_ADMIN_CANCELED
         record.updated_timestamp = datetime.now()
-        exchange = Exchange.query.filter_by(exchange_id=data["exchange_id"])
+        exchange = Exchange.query.filter_by(exchange_id=int(data["exchange_id"]))
         for x in exchange:
+            print(x.id)
             x.status=EXCHANGE_ADMIN_CANCELED
         db.session.commit()
     return jsonify(target="index")
@@ -456,42 +458,55 @@ def exchanges():
 #    if not current_user.is_authenticated:
 #        return redirect(url_for('login',next='/exchanges'))
 
-#    user_id = User.query.filter_by(username=current_user.username).first().id
- #   hospital_id = Hospital.query.filter_by(user_id=user_id).first().id
-    hospital_id = 1
+    user_id = User.query.filter_by(username=current_user.username).first().id
+    hospital_id = User.query.filter_by(id=user_id).first().hospital_id
     
     exchanges = Exchanges.query.all()
     items = []
     for ex in exchanges:
-        exchange = Exchanges.query.filter_by(ex.id)
+        exchange = Exchange.query.filter_by(exchange_id=ex.id)
         good = False
         its = []
- 
+
+        # good = is this hospital involved in this individual exchange?
         for x in exchange:
             if x.hospital1==hospital_id:
                 good = True
             elif x.hospital2==hospital_id:
                 good = True
         if good:
-            for x in exchange:
+            inners = Exchange.query.filter_by(exchange_id=ex.id)
+            verify1 = True
+            verify2 = True
+            # verify(1/2) = has this hospital verified this whole exchange?
+            for inner in inners:
+                if hospital_id == inner.hospital1 and not inner.is_h1_verified:
+                    verify1 = False
+                elif hospital_id == inner.hospital2 and not inner.is_h2_verified:
+                    verify2 = False
                 i = {
-                    "h1_name": Hospital.query.filter_by(id = x.hospital1).first().name,
-                    "h1": x.hospital1,
-                    "h2_name": Hospital.query.filter_by(id = x.hospital2).first().name,
-                    "h2": x.hospital2,
-                    "ppe": PPE.query.filter_by(id = x.ppe).first().sku,
-                    "count": x.count
+                    "id": inner.id,
+                    "h1_name": Hospital.query.filter_by(id = inner.hospital1).first().name,
+                    "h1": inner.hospital1,
+                    "h2_name": Hospital.query.filter_by(id = inner.hospital2).first().name,
+                    "h2": inner.hospital2,
+                    "ppe": PPE.query.filter_by(id = inner.ppe).first().sku,
+                    "count": inner.count,
+                    "status": inner.status,
+                    "is_verified": inner.is_h1_verified and inner.is_h2_verified,
+                    "is_shipped": inner.is_h1_shipped,
+                    "is_received": inner.is_h2_received
                 }
                 its.append(i)
-        exchange = Exchange.query.filter_by(hospital1=ex.id) 
-        for x in exchange:
             items.append({
                 "exchange_sid": ex.id,
+                "exchange_status": ex.status,
                 "exchange_created": ex.created_timestamp,
                 "exchange_updated": ex.updated_timestamp,
                 "exchanges": its,
+                "verify1": verify1,
+                "verify2": verify2
             })
-        
     hospital = {
         "hospital_name": Hospital.query.filter_by(id=hospital_id).first().name,
         "hospital_id":hospital_id
@@ -512,3 +527,78 @@ def exchanges():
 # Exchange ID   when created    when updated    exchange part 1     status part 1: optional button (verify/shipped/received)
 #                                               exchange part 2     status part 2: optional button
 #                                               ...                 ...
+
+@app.route('/update_exchange', methods=['GET', 'POST'])
+def update_exchange():
+    data = json.loads(request.get_data())
+    if not current_user.is_authenticated:
+        return jsonify(target="login?next="+data['state'])
+    if data["task"] == "verify":
+        exchanges = db.session.query(Exchange)
+        exchanges = exchanges.filter_by(exchange_id=int(data["exchange_id"]))
+        print("verifying hostpital" + data["hospital_id"])
+        for ex in exchanges:
+            if ex.hospital1 == int(data["hospital_id"]):
+                print("hosptial1")
+                ex.updated_timestamp=datetime.now()
+                ex.is_h1_verified = True
+                if ex.is_h1_verified and ex.is_h2_verified:
+                    ex.status = EXCHANGE_ACCEPTED_NOT_SHIPPED
+                    e = db.session.query(Exchanges).filter_by(id=int(data["exchange_id"])).first()
+                    e.updated_timestamp=datetime.now()
+                    e.status=EXCHANGE_IN_PROGRESS
+            elif ex.hospital2 == int(data["hospital_id"]):
+                print("hosptial2")
+                ex.updated_timestamp=datetime.now()
+                ex.is_h2_verified = True
+                if ex.is_h1_verified and ex.is_h2_verified:
+                    ex.status = EXCHANGE_ACCEPTED_NOT_SHIPPED            
+                    e = db.session.query(Exchanges).filter_by(id=int(data["exchange_id"])).first()
+                    e.updated_timestamp=datetime.now()
+                    e.status=EXCHANGE_IN_PROGRESS
+        db.session.commit()
+    elif data["task"] == "cancel":
+        exchanges = db.session.query(Exchange)
+        exchanges = exchanges.filter_by(exchange_id=int(data["exchange_id"]))
+        for ex in exchanges:
+            ex.updated_timestamp=datetime.now()
+            ex.status=EXCHANGE_HOSPITAL_CANCELED
+
+        e = db.session.query(Exchanges).filter_by(id=int(data["exchange_id"])).first()
+        e.updated_timestamp=datetime.now()
+        e.status=EXCHANGE_COMPLETE_HOSPITAL_CANCELED
+        db.session.commit()
+    elif data["task"] == "shipped":
+        exchange = db.session.query(Exchange)
+        exchange = exchange.filter_by(id=int(data["e_id"])).first()
+        exchange.is_h1_shipped = True
+        exchange.updated_timestamp=datetime.now()
+        exchange.status=EXCHANGE_ACCEPTED_SHIPPED
+        db.session.commit()
+    elif data["task"] == "received":
+        exchange = db.session.query(Exchange)
+        exchange = exchange.filter_by(id=int(data["e_id"])).first()
+        exchange.is_h2_received = True
+        exchange.updated_timestamp=datetime.now()
+        exchange.status=EXCHANGE_ACCEPTED_RECEIVED
+ 
+        exchanges = db.session.query(Exchange)
+        print("here")
+        print(data["exchange_id"])
+        print("here2")
+        exchanges = exchanges.filter_by(exchange_id=int(data["exchange_id"]))
+        done = True
+        for ex in exchanges:
+            if not ex.status == EXCHANGE_ACCEPTED_RECEIVED:
+                done = False
+        print(done)
+        print(data["exchange_id"])
+        if done == True:
+            q = db.session.query(Exchanges)
+            q = q.filter_by(id=int(data["exchange_id"]))
+            print(data["exchange_id"])
+            record = q.first()
+            record.status = EXCHANGE_COMPLETE
+            record.updated_timestamp = datetime.now()
+        db.session.commit()
+    return jsonify(target="index")

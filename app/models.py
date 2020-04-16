@@ -95,7 +95,7 @@ EXCHANGE_COMPLETE_HOSPITAL_CANCELED = 3
 EXCHANGE_COMPLETE_HOSPITAL_CANCELED_TEXT = "Hospital canceled"
 
 # exchange complete, canceled by admin: EXCHANGE_COMPLETE_ADMIN CANCELED = 4
-EXCHANGE_COMPLETE_ADMIN_CANCELED = 4
+EXCHANGE_COMPLETE_ADMIN_CANCELED = 4    
 EXCHANGE_COMPLETE_ADMIN_CANCELED_TEXT = "Administrator canceled"
 
 # exchange has been created, but not verified by parties: EXCHANGE_UNVERIFIED = 11
@@ -109,7 +109,8 @@ EXCHANGE_IN_PROGRESS_TEXT = "Exchange in progress"
 class Exchanges(db.Model):
     __tablename__ = "exchanges"
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    created_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.Integer)
     exchange = db.relationship('Exchange', backref='author8', lazy='dynamic')
 
