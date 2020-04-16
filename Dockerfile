@@ -9,9 +9,6 @@ COPY . .
 # install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# setup database
-RUN flask db init; flask db migrate -m "users table"; flask db upgrade
-
 # define the port number the container should expose
 EXPOSE 5000
 
