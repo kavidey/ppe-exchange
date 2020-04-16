@@ -11,5 +11,5 @@
     4. There will be a warning about not having entered login email login info. Don't worry about that, 90% of the website will still work.
 
 ## Getting Started with Docker
-1. Download and install Docker
+1. Download and install [Docker](https://docs.docker.com/get-docker/)
 2. Run the command ``docker run -p 5000:5000 kavidey/ppe-exchange``
