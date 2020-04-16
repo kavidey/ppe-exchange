@@ -1,45 +1,89 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block app_content %}
+<div class="content">
     <h1>Admin SKU</h1>
-    <div id="delete-check" style="background-color:#FFFFFF;position:fixed;width:100%;height:100%;top:0px;left:0px;z-index:1000;display: none;">
-        <h1>Are you sure you want to remove SKU <span id="remove-item-name"></span></h1>
-        <div>
-            <button id="yes" onclick="removeSKU()">Yes</button> <button id="no" onclick="hideDeleteCheck()">No</button>
+
+    <div id="delete-check" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Remove Confirmation</h2>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to remove SKU <span id="remove-item-name"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button id="yes" class="btn btn-danger" onclick="removeSKU()">Yes</button>
+                    <button id="no" class="btn btn-primary"  onclick="hideDeleteCheck()">No</button>
+                </div>	   
+            </div>
+        </div>
+     </div>
+ 
+     <div id="edit" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Edit <span id="edit-item-name"></span></h2>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group row padded">
+                        <label style="margin-right: 2em;" for="add-name"><b>SKU <span id="edit-sku"></span>:</b></label>
+                        <input class="form-control" id="edit-desc" type="textarea" value="">
+                    </div>
+                    <div class="form-group row padded">
+                        <button style="margin-right: 2em;" class="btn btn-success" id="edit-upload-image">Upload New Image</button>
+                        <input onchange="editImportFileandPreview()" accept="image/*" id="edit-file-input" type="file", name="name" style="display: none">
+                        <img id="edit-img" style="width: 200px;" src="">
+                    </div>
+                    <br>
+                </div>
+                <div class="modal-footer">
+                    <button id="yes" class="btn btn-primary" onclick="applyEdits()">Apply Edits</button>
+                    <button id="no" class="btn btn-info" onclick="hideEditPage()">Cancel</button>
+                </div>	   
+            </div>
         </div>
     </div>
-    <div id="edit" style="background-color:#FFFFFF;position:fixed;width:100%;height:100%;top:0px;left:0px;z-index:1000;display: none;">
-        <h1>Edit <span id="edit-item-name"></span></h1>
-        <div>
-            <p>
-                <b>SKU <span id="edit-sku"></span>:</b>
-                <input id="edit-desc" type="textarea" value="">
-                <img id="edit-img" style="width: 200px;" src="">
-                <button id="edit-upload-image">Upload New Image</button>
-                <input onchange="editImportFileandPreview()" accept="image/*" id="edit-file-input" type="file", name="name" style="display: none">
-            </p>
-        </div>
-        <div>
-            <button id="yes" onclick="applyEdits()">Apply Edits</button> <button id="no" onclick="hideEditPage()">Cancel</button>
-        </div>
-    </div>
+
     {% for item in items %}
         <div class="items" >
             <p>
-                <b>SKU <span class="sku">{{ item.sku }}</span>:</b>{{ item.desc }}
+                <b>SKU <span class="sku">{{ item.sku }}</span>:</b> {{ item.desc }}
                 <img style="width: 200px;" src="{{ item.img }}">
-                <button id="remove" onclick="checkRemoveSKU('{{ item.sku }}')">Remove</button>
-                <button id="edit" onclick="edit('{{ item.sku }}', '{{ item.desc }}', '{{ item.img }}')">Edit</button>
+                <button id="remove" class="btn btn-danger" onclick="checkRemoveSKU('{{ item.sku }}')">Remove</button>
+                <button id="edit" class="btn btn-primary" onclick="edit('{{ item.sku }}', '{{ item.desc }}', '{{ item.img }}')">Edit</button>
             </p>
         </div>
     {% endfor %}
     <br>
-    <div id="add">
-        SKU: <input id="add-sku" type="textarea"> 
-        Description: <input id="add-desc" type="textarea">
-        Upload Image: <button id="add-img">Upload</button> <input onchange="importFileandPreview()" accept="image/*" id="file-input" type="file", name="name" style="display: none"> <img style="width: 200px;" id="show-img"></img> 
+    <div id="add" style="margin-left: 0.75em;">
+        <div class="form-group row padded">
+            <label class="form-check-label col-sm-2 col-form-label" for="add-sku"><b>SKU:</b></label>
+	        <div class="col-sm-10">
+		        <input id="add-sku" class="form-control" type="textarea">
+	        </div>
+	    </div>
+        <div class="form-group row padded">
+	        <label class="form-check-label col-sm-2 col-form-label" for="add-desc"><b>Description:</b></label>
+	        <div class="col-sm-10">
+		        <input id="add-desc" class="form-control" type="textarea">
+            </div>
+            <br style="margin: 0; padding: 0;">
+        </div>
+        <div class="form-group row padded">
+	        <label class="form-check-label col-sm-2 col-form-label" for="add-address"><b>Upload Image:</b></label>
+	        <div class="col-sm-10">
+		        <button id="add-img" class="btn btn-info">Upload</button> <input onchange="importFileandPreview()" accept="image/*" id="file-input" type="file", name="name" style="display: none"> <img style="width: 200px;" id="show-img"></img>
+            </div>
+            <br style="margin: 0; padding: 0;">
+            <br style="margin: 0; padding: 0;">
+            <p>&nbsp;<button class="btn btn-success" style="margin-left:  1em; margin-bottom: 0; margin-top: 0; padding-left: 1.5em; padding-right: 1.5em;" onclick="addSKU()">Add</button></p>
+        </div>
+        <br>
     </div>
-    <button onclick="addSKU()">Add</button>
+</div>
     <script>
         var image_uploaded = false;
         var edit_image_uploaded = false;
@@ -80,10 +124,6 @@
                 return NaN
             }
 
-            if (!image_uploaded) {
-                alert("No image selected");
-                return NaN
-            }
             item = {
                 "sku": $("#add-sku").val(),
                 "desc": $("#add-desc").val(),

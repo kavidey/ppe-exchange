@@ -1,58 +1,60 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block app_content %}
+<div class="content">
     <h1>Register</h1>
     <form action="" method="post">
         {{ form.hidden_tag() }}
         <p>
             {{ form.username.label }}<br>
-            {{ form.username(size=32) }}<br>
+            {{ form.username(size=32, class_="form-control") }}<br>
             {% for error in form.username.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
             {{ form.email.label }}<br>
-            {{ form.email(size=64) }}<br>
+            {{ form.email(size=64, class_="form-control") }}<br>
             {% for error in form.email.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
             {{ form.password.label }}<br>
-            {{ form.password(size=32) }}<br>
+            {{ form.password(size=32, class_="form-control") }}<br>
             {% for error in form.password.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
             {{ form.password2.label }}<br>
-            {{ form.password2(size=32) }}<br>
+            {{ form.password2(size=32, class_="form-control") }}<br>
             {% for error in form.password2.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
             {{ form.contact.label }}<br>
-            {{ form.contact(size=64) }}<br>
+            {{ form.contact(size=64, class_="form-control") }}<br>
             {% for error in form.contact.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
             {{ form.address.label }}<br>
-            {{ form.address(size=64) }}<br>
+            {{ form.address(size=64, class_="form-control") }}<br>
             {% for error in form.address.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
             {{ form.hospital_name.label }}<br>
-            {{ form.hospital_name }}<br>
+            {{ form.hospital_name(class_="form-control") }}<br>
             {% for error in form.hospital_name.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
-        <p>{{ form.submit() }}</p>
+        <p>{{ form.submit(class_="btn btn-primary") }}</p>
     </form>
+</div>
 {% endblock %}

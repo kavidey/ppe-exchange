@@ -1,38 +1,67 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block app_content %}
+<div class="content">
     <h1>{{ hospital.hospital_name }} {{ state }}</h1>
-    {% for item in items %}
-    <div class="items" ><p><b>SKU <span class="sku">{{ item.sku }}</span>:</b> {{ item.desc }}: <img style="width: 200px;" src="{{ item.img }}">: <input class="count" pattern="[0-9]" type="textarea" value="{{ item.count }}"></p> </div>
-    {% endfor %}
-    <button type="button" class="btn btn-primary"  onclick="submit()" >Submit</button>
-    <script>
-        function submit() {
-            var items = [];
-            $('.items').each( function() {
-                items.push({sku: $(this).find(".sku").html(), count: Number($(this).find(".count").val())});
-            });
 
-            for (var i=0; i < items.length; i++) {
-                if (isNaN(items[i].count)) {
-                    alert("Count of SKU: " + items[i].sku +" must be a number");
-                    return NaN
-                }
+   {% for item in items %}
+
+    <div class="container bg-light">
+        <div class="row">
+            <div class="col">
+              <img class="itmimg" width="150" src="{{ item.img }}" align="left">
+            </div>
+            <div class="col">
+              <div class="row">
+                <p><b>SKU <span id="sku">{{ item.sku }}</span></b> {{ item.desc }}<br>
+Count
+                  <input class="form-control" type="text" pattern="[0-9]" class="count" placeholder="{{ item.count }}" />
+		  <br>
+                <button onclick="submit()" class="btn btn-primary">Update Count</button>
+		</p>
+              </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<script>
+    function submit() {
+        var items = [];
+        $('.container').each( function() {
+            var count_input = $(this).find(".count");
+            var count = count_input.val();
+            if (count_input.val() == "") {
+                count = count_input.attr('placeholder')
             }
-            data = {state: "{{ state }}".toLowerCase(), items: items};
-            $.ajax({
-                url: "/update_want_need",
-                type: "POST",
-                contentType:'application/json',
-                data: JSON.stringify(data),
-                dataType:'json',
-		                success: function(result) {
-                    document.location.href="/"+result.target;
-                },
-                error: function(result) {
-                    alert("There was an error please reload and try again");
-                }
-            });
+            items.push({sku: $(this).find("#sku").html(), count: Number(count)});
+        });
+
+        console.log(items)
+
+        for (var i=0; i < items.length; i++) {
+            if (isNaN(items[i].count)) {
+                alert("Count of SKU: " + items[i].sku +" must be a number");
+                return NaN
+            }
         }
-    </script>
+
+        data = {state: "{{ state }}".toLowerCase(), items: items};
+        console.log(data);
+        $.ajax({
+            url: "/update_want_need",
+            type: "POST",
+            contentType:'application/json',
+            data: JSON.stringify(data),
+            dataType:'json',
+            success: function(result) {
+                document.location.href="/"+result.target;
+            },
+            error: function(result) {
+                alert("There was an error please reload and try again");
+            }
+        });
+        return false;
+    }
+</script>
 {% endblock %}

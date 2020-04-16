@@ -96,6 +96,8 @@ def verify():
             flash('Congratulations, you are now a verified user!')
             return redirect(url_for('index'))
         return render_template('verify.html', title='Verify', form=form)
+    elif user.is_verified:
+        return redirect(url_for("index"))
     else:
         return render_template('404.html')
 @app.route('/wants', methods=['GET', 'POST'])
@@ -211,7 +213,7 @@ def update_want_need():
                 h = Has(hospital_id=user_hospital.id, ppe_id=ppe_id, count=item["count"])
                 db.session.add(h)
         db.session.commit()
-    return jsonify(target="index")
+    return jsonify(target=data['state'])
 
 @app.route('/admin_sku', methods=['GET', 'POST'])
 def admin_sku():
