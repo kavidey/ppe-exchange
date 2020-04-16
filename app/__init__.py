@@ -16,14 +16,21 @@ bootstrap = Bootstrap(app)
 login = LoginManager(app)
 login.login_view = 'login'
 
+uname = ""
+pwd = ""
+try:
+    uname = os.environ['EMAIL_USER']
+    pwd = os.environ['EMAIL_PASSWORD']
+except:
+    print("\n[WARNING] You have not entered any email login information. PPE-Exchange wil not be able to send any emails\n")
 
 mail_settings = {
     "MAIL_SERVER": 'smtp.gmail.com',
     "MAIL_PORT": 465,
     "MAIL_USE_TLS": False,
     "MAIL_USE_SSL": True,
-    "MAIL_USERNAME": os.environ['EMAIL_USER'],
-    "MAIL_PASSWORD": os.environ['EMAIL_PASSWORD']
+    "MAIL_USERNAME": uname,
+    "MAIL_PASSWORD": pwd
 }
 
 app.config.update(mail_settings)
