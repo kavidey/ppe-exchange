@@ -1,5 +1,25 @@
 from ortools.graph import pywrapgraph
 
+kCredits = 1
+kNormalizationFactor = 1
+participants = {
+    "1": {
+        "name": "Jim",
+        "credits": 0,
+        "normalization_factor": 1
+    },
+    "2": {
+        "name": "Mike",
+        "credits": 0,
+        "normalization_factor": 1
+    },
+    "3": {
+        "name": "Cathy",
+        "credits": 0,
+        "normalization_factor": 1
+    }
+}
+
 want = [
     {
         "hospital": "1",
@@ -87,7 +107,9 @@ for sku in sku_supply_demand:
             start_nodes.append(h["node_id"])
             end_nodes.append(w["node_id"])
             capacities.append(h["count"])
-            unit_costs.append(1)
+            hospital = participants[w["hospital"]]
+            weight = -hospital["credits"]*kCredits / hospital["normalization_factor"]*kNormalizationFactor
+            unit_costs.append(int(weight))
     
     print()
     print("---------------- "+sku+" ----------------")
