@@ -1,4 +1,5 @@
-from app.matching_algorithm.ford_fulkerson import FlowNetwork
+from ford_fulkerson import FlowNetwork
+
 
 participants = {
     "1": "Jim",
@@ -65,7 +66,6 @@ has = {
             }
     ]
 }
-
 
 fn = FlowNetwork()
 fn.addVertex('s', True, False)
