@@ -538,10 +538,10 @@ def update_exchange():
     if data["task"] == "verify":
         exchanges = db.session.query(Exchange)
         exchanges = exchanges.filter_by(exchange_id=int(data["exchange_id"]))
-        print("verifying hostpital" + data["hospital_id"])
+#        print("verifying hostpital" + data["hospital_id"])
         for ex in exchanges:
             if ex.hospital1 == int(data["hospital_id"]):
-                print("hosptial1")
+#                print("hosptial1")
                 ex.updated_timestamp=datetime.now()
                 ex.is_h1_verified = True
                 if ex.is_h1_verified and ex.is_h2_verified:
@@ -549,8 +549,14 @@ def update_exchange():
                     e = db.session.query(Exchanges).filter_by(id=int(data["exchange_id"])).first()
                     e.updated_timestamp=datetime.now()
                     e.status=EXCHANGE_IN_PROGRESS
+#                    send_hospital_exchange_own_verified(username, hostname, email, exchange_id):
+#                                User.query.filter_by(id=data["user_id"]).first().username,
+#            key,
+#            "localhost:5000",
+#            User.query.filter_by(id=data["user_id"]).first().email)
+#
             elif ex.hospital2 == int(data["hospital_id"]):
-                print("hosptial2")
+#                print("hosptial2")
                 ex.updated_timestamp=datetime.now()
                 ex.is_h2_verified = True
                 if ex.is_h1_verified and ex.is_h2_verified:
