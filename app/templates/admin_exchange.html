@@ -34,12 +34,16 @@
             {% for ex in exchanges %}
             <tr>
                 <th scope="row">{{ ex.id }}</th>
-                <td>{{ ex.created_timestamp }}</td>
-                <td>{{ ex.updated_timestamp }}</td>
+                <td>{{ ex.created_timestamp.replace(microsecond=0) }}</td>
+                <td>{{ ex.updated_timestamp.replace(microsecond=0) }}</td>
                 <td>
                     <table>
                         {% for e in ex.exchanges %}
-                        <tr><td> {{ e.h1 }} giving {{ e.h2 }} {{ e.count }} instances of {{ e.ppe }}</td></tr>
+                            <tr>
+                                <td>
+                                    <b>{{ e.h1 }}</b> giving {{ e.count }} instances of {{ e.ppe }} to <b>{{ e.h2 }}</b>
+                                </td>
+                            </tr>
                         {% endfor %}
                     </table>
                 </td>
