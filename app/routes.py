@@ -4,13 +4,14 @@ from werkzeug.urls import url_parse
 from werkzeug import secure_filename
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, VerifyForm, AdminAuthorizationForm
-from app.models import User, PPE, Hospital, Wants, Has, Exchanges, Exchange, EXCHANGE_COMPLETE, EXCHANGE_COMPLETE_TEXT, EXCHANGE_COMPLETE_ADMIN, EXCHANGE_COMPLETE_ADMIN_TEXT, EXCHANGE_COMPLETE_HOSPITAL_CANCELED, EXCHANGE_COMPLETE_HOSPITAL_CANCELED_TEXT, EXCHANGE_COMPLETE_ADMIN_CANCELED, EXCHANGE_COMPLETE_ADMIN_CANCELED_TEXT, EXCHANGE_UNVERIFIED, EXCHANGE_UNVERIFIED_TEXT, EXCHANGE_IN_PROGRESS, EXCHANGE_IN_PROGRESS_TEXT, EXCHANGE_NOT_ACCEPTED, EXCHANGE_ACCEPTED_NOT_SHIPPED, EXCHANGE_ACCEPTED_SHIPPED, EXCHANGE_ACCEPTED_RECEIVED, EXCHANGE_HOSPITAL_CANCELED, EXCHANGE_ADMIN_CANCELED
+from app.models import User, PPE, Hospital, Wants, Has, Exchanges, Exchange, EXCHANGE_COMPLETE, EXCHANGE_COMPLETE_TEXT, EXCHANGE_COMPLETE_ADMIN, EXCHANGE_COMPLETE_ADMIN_TEXT, EXCHANGE_COMPLETE_HOSPITAL_CANCELED, EXCHANGE_COMPLETE_HOSPITAL_CANCELED_TEXT, EXCHANGE_COMPLETE_ADMIN_CANCELED, EXCHANGE_COMPLETE_ADMIN_CANCELED_TEXT, EXCHANGE_UNVERIFIED, EXCHANGE_UNVERIFIED_TEXT, EXCHANGE_IN_PROGRESS, EXCHANGE_IN_PROGRESS_TEXT, EXCHANGE_NOT_ACCEPTED, EXCHANGE_ACCEPTED_NOT_SHIPPED, EXCHANGE_ACCEPTED_SHIPPED, EXCHANGE_ACCEPTED_RECEIVED, EXCHANGE_HOSPITAL_CANCELED, EXCHANGE_ADMIN_CANCELED, EXCHANGE_ADMIN_NOT_VERIFIED
 from app import crypto
 from app import email
 from datetime import datetime
 
 import json
 import os
+import math
 
 @app.route('/')
 @app.route('/index')
@@ -100,6 +101,7 @@ def verify():
         return redirect(url_for("index"))
     else:
         return render_template('404.html')
+
 @app.route('/wants', methods=['GET', 'POST'])
 def wants():
     if not current_user.is_authenticated:
@@ -116,15 +118,23 @@ def wants():
     items = []
     for item in skus:
         count = 0
+        count_other = 0
         try:
             count = Wants.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
         except:
             count = 0
+        # adding get count of Has
+        try:
+            count_other = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
+        except:
+            count_other = 0
+
         items.append({
             "sku": item.sku,
             "desc": item.desc,
             "img": item.img.decode(),
-            "count": count
+            "count": count,
+            "grey_out": count_other > 0
         })
 
     hospital = {
@@ -148,15 +158,25 @@ def has():
     items = []
     for item in skus:
         count = 0
+        count_other = 0
         try:
             count = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
         except:
             count = 0
+       # adding get count of Has
+        try:
+            count_other = Wants.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
+        except:
+            count_other = 0
+
+        print(str(count) +", "+str(count_other))
+        
         items.append({
             "sku": item.sku,
             "desc": item.desc,
             "img": item.img.decode(),
-            "count": count
+            "count": count,
+            "grey_out": count_other > 0
         })
 
     hospital = {
@@ -439,7 +459,7 @@ def admin_exchange():
 @app.route('/update_admin_exchanges', methods=['GET', 'POST'])
 def update_admin_exchanges():
     data = json.loads(request.get_data())
-    print (data)
+    print(data)
     if not current_user.is_authenticated:
         return jsonify(target="login?next="+data['state'])
     if data["task"] == "cancel":
@@ -452,6 +472,34 @@ def update_admin_exchanges():
         for x in exchange:
             print(x.id)
             x.status=EXCHANGE_ADMIN_CANCELED
+        db.session.commit()
+    elif data["task"] == "cancel_pre_verify":
+        q = Exchanges.query.filter_by(id=int(data["exchange_id"])).first()
+        q.status = EXCHANGE_COMPLETE_ADMIN_CANCELED
+        q.updated_timestamp = datetime.now()
+        exchange = Exchange.query.filter_by(exchange_id=int(data["exchange_id"]))
+        for x in exchange:
+            x.status=EXCHANGE_ADMIN_CANCELED
+            # undo has and wants
+            transfer = x.count
+            has = Has.query.filter_by(hospital_id=x.hospital1).first()
+            has.count += transfer
+            wants = Wants.query.filter_by(hospital_id=x.hospital2).first()
+            wants.count += transfer
+
+            # undo credit transfers
+            tx = Hospital.query.filter_by(id=x.hospital1).first()
+            tx.credit -= transfer
+
+            rx = Hospital.query.filter_by(id=x.hospital2).first()
+            rx.credit += transfer
+        db.session.commit()
+    elif data["task"] == "verify":
+        q = db.session.query(Exchanges)
+        q = q.filter(Exchanges.id==(int(data["exchange_id"])))
+        record = q.first()
+        record.status = EXCHANGE_ADMIN_NOT_VERIFIED
+        record.updated_timestamp = datetime.now()
         db.session.commit()
     return jsonify(target="index")
 
@@ -470,12 +518,15 @@ def exchanges():
         good = False
         its = []
 
-        # good = is this hospital involved in this individual exchange?
-        for x in exchange:
-            if x.hospital1==hospital_id:
-                good = True
-            elif x.hospital2==hospital_id:
-                good = True
+        if ex.status==EXCHANGE_ADMIN_NOT_VERIFIED:
+            good = False
+
+            # good = is this hospital involved in this individual exchange?
+            for x in exchange:
+                if x.hospital1==hospital_id:
+                    good = True
+                elif x.hospital2==hospital_id:
+                    good = True
         if good:
             inners = Exchange.query.filter_by(exchange_id=ex.id)
             verify1 = True
@@ -610,3 +661,106 @@ def update_exchange():
             record.updated_timestamp = datetime.now()
         db.session.commit()
     return jsonify(target="index")
+
+@app.route('/admin_create_exchange', methods=['GET', 'POST'])
+def admin_create_exchange():
+    haves = Has.query.all()
+    wants = Wants.query.all()
+
+    exchanges = []
+    ppes = PPE.query.all()
+
+    # looping through each SKU
+    for ppe in ppes:
+        # query for haves and wants of this SKU
+        haves = Has.query.filter_by(ppe_id=ppe.id)
+        wants = Wants.query.filter_by(ppe_id=ppe.id)
+
+        # get total number of haves and wants for ths SKU
+        have_total = 0
+        want_total = 0
+        for have in haves:
+            have_total = have_total + have.count
+        for want in wants:
+            want_total = want_total + want.count
+        
+        # if there are both haves and wants
+        if have_total > 0 and want_total > 0:
+            # enough supply to meet demand
+            if want_total <= have_total:
+###  approach is to take all supply from as many hospitals as necessary
+                for have in haves:
+                    send_amount = have.count
+                    for want in wants:
+                        sending = min(send_amount, want.count)
+                        print("sending",sending,want.count,send_amount)
+                        send_amount = send_amount - sending
+                        want.count = want.count - sending
+                        if sending > 0: 
+                            
+###  commenting this approach out: took proportional amount from each hospital's supply rather than taking all from the first few
+#                ratio = want_total/have_total
+#                for have in haves:
+#                    send_amount = int(have.count * ratio)
+#                    for want in wants:
+#                        sending = min(send_amount,want.count)
+                        # create exchange moving sending amount of ppe.id from have.hospital_id to want.hospital_id
+                            exchanges.append({
+                                "tx_hospital": have.hospital_id,
+                                "rx_hospital": want.hospital_id,
+                                "ppe": have.ppe_id,
+                                "count": sending
+                            })
+                        if send_amount == 0:
+                            break    
+            # not enough supply to meet demand
+            else:
+                ratio = have_total/want_total
+                print("ratio",ratio)
+                for want in wants:
+                    want.count = int(math.floor(want.count * ratio))
+
+                for have in haves:
+                    send_amount = have.count
+                    for want in wants:
+                        sending = min(send_amount,want.count)
+                        # create exchange moving have.count amount of ppe.id from have.hospital_id to want.hospital_id
+                        send_amount = send_amount - sending
+                        want.count = want.count - sending
+                        if sending > 0: 
+                            exchanges.append({
+                                "tx_hospital": have.hospital_id,
+                                "rx_hospital": want.hospital_id,
+                                "ppe": have.ppe_id,
+                                "count": sending
+                            })
+                        if send_amount == 0:
+                            break    
+
+            # update credits and has and wants
+            es = Exchanges()
+            eid = es.id
+            db.session.add(es)
+            # loop through created exchanges
+            for exchange in exchanges:
+                transfer = exchange["count"]
+
+                # first credits
+                tx = Hospital.query.filter_by(id=exchange["tx_hospital"]).first()
+                tx.credit += transfer
+
+                rx = Hospital.query.filter_by(id=exchange["rx_hospital"]).first()
+                rx.credit -= transfer
+
+                # then has
+                tx_has = Has.query.filter_by(hospital_id=exchange["tx_hospital"], ppe_id=exchange["ppe"]).first()
+                tx_has.count -= transfer
+
+                # already handled udpdating want counts above
+                e = Exchange(exchange_id=es.id,hospital1=exchange["tx_hospital"],hospital2=exchange["rx_hospital"],ppe=ppe.id,count=transfer)
+                db.session.add(e)
+            db.session.commit()
+        else:
+            print("no joy",ppe.sku)
+    print(exchanges)
+    return redirect(url_for('admin_exchange'))
