@@ -1,8 +1,14 @@
 """empty message
 
+<<<<<<< HEAD:migrations/versions/4131a75cb8fd_.py
+Revision ID: 4131a75cb8fd
+Revises: 
+Create Date: 2020-04-21 21:26:29.199631
+=======
 Revision ID: b5d77f1cb86b
 Revises: 
 Create Date: 2020-04-19 14:23:06.339199
+>>>>>>> master:migrations/versions/b5d77f1cb86b_.py
 
 """
 from alembic import op
@@ -10,7 +16,11 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
+<<<<<<< HEAD:migrations/versions/4131a75cb8fd_.py
+revision = '4131a75cb8fd'
+=======
 revision = 'b5d77f1cb86b'
+>>>>>>> master:migrations/versions/b5d77f1cb86b_.py
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -34,6 +44,7 @@ def upgrade():
     sa.Column('state', sa.String(length=128), nullable=True),
     sa.Column('zipcode', sa.String(length=128), nullable=True),
     sa.Column('name', sa.String(length=140), nullable=True),
+    sa.Column('credit', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('ppe',

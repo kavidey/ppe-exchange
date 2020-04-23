@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="content">
+    <h1>{{ hospital.hospital_name }} {{ state }}</h1>
+
+   {% for item in items %}
+
+    <div class="container bg-light sku-wrapper">
+        <div class="row">
+            <div class="col">
+              <img class="itmimg" width="150" src="{{ item.img }}" align="left">
+            </div>
+            <div class="col">
+              <div class="row">
+                <p><b>SKU <span class="sku">{{ item.sku }}</span></b> {{ item.desc }}<br>
+Count
+                  <input class="form-control count" type="text" pattern="[0-9]" placeholder="{{ item.count }}" />
+		  <br>
+                <button onclick="submit()" class="btn btn-primary">Update Count</button>
+		</p>
+              </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<script>
+    function submit() {
+        var items = [];
+        $('.sku-wrapper').each( function() {
+            var count_input = $(this).find(".count");
+            var count = count_input.val();
+            if (count_input.val() == "") {
+                count = count_input.attr('placeholder')
+            }
+            var count_input2 = $(this).find(".count_other");
+            var count2 = count_input2.val();
+            if (count_input2.val() == "") {
+                count2 = count_input2.attr('placeholder')
+            }
+            items.push({sku: $(this).find(".sku").html(), count: Number(count), count_other: Number(count2)});
+        });
+
+        console.log(items);
+
+        for (var i=0; i < items.length; i++) {
+            if (isNaN(items[i].count)) {
+                alert("Count of SKU: " + items[i].sku +" must be a number");
+                return NaN
+            }
+            else if (items[i].count > 0 && items.other_count > 0) {
+                alert("Can't add SKU: " +items[i].sku + "to " + {{ state }} +", since it is already in your " + {{ state2 }}+ " requests.")
+            }
+        }
+
+        data = {state: "{{ state }}".toLowerCase(), items: items};
+        console.log(data);
+        $.ajax({
+            url: "/update_want_need",
+            type: "POST",
+            contentType:'application/json',
+            data: JSON.stringify(data),
+            dataType:'json',
+            success: function(result) {
+                document.location.href="/"+result.target;
+            },
+            error: function(result) {
+                alert("There was an error please reload and try again");
+            }
+        });
+        return false;
+    }
+</script>
+{% endblock %}

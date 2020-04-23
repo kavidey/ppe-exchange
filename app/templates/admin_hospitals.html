@@ -48,7 +48,9 @@
                 <tr>
                 <th scope="col">ID</th>
                 <th scope="col">Name</th>
-                <th scope="col">Action</th>
+                <th scope="col">Address</th>
+                <th scope="col">Credits</th>
+                <th scope="col">Changes</th>
                 </tr>
             </thead>
             <tbody>
@@ -56,6 +58,8 @@
                 <tr>
                     <th scope="row">{{ item.id }}</th>
                     <td>{{ item.name }}</td>
+                    <td>{{ item.address }}</td>
+                    <td>{{ item.credit }} </td>
                     <td>
                             <button class="btn btn-danger" id="remove" onclick="checkRemoveHospital('{{ item.id }}', '{{ item.name }}')">Remove</button>
                             <button id="edit" class="btn btn-primary" onclick="edit('{{ item.id }}', '{{ item.name }}')">Edit</button>
