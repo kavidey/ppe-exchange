@@ -34,6 +34,13 @@
             {% endfor %}
         </p>
         <p>
+            {{ form.hospital_name.label }}<br>
+            {{ form.hospital_name(class_="form-control") }}<br>
+            {% for error in form.hospital_name.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
             {{ form.contact.label }}<br>
             {{ form.contact(size=64, class_="form-control") }}<br>
             {% for error in form.contact.errors %}
@@ -41,16 +48,30 @@
             {% endfor %}
         </p>
         <p>
-            {{ form.address.label }}<br>
-            {{ form.address(size=64, class_="form-control") }}<br>
-            {% for error in form.address.errors %}
+            {{ form.street.label }}<br>
+            {{ form.street(size=64, class_="form-control") }}<br>
+            {% for error in form.street.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
-            {{ form.hospital_name.label }}<br>
-            {{ form.hospital_name(class_="form-control") }}<br>
-            {% for error in form.hospital_name.errors %}
+            {{ form.city.label }}<br>
+            {{ form.city(size=64, class_="form-control") }}<br>
+            {% for error in form.city.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.state.label }}<br>
+            {{ form.state(class_="form-control") }}<br>
+            {% for error in form.state.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.zipcode.label }}<br>
+            {{ form.zipcode(size=64, class_="form-control") }}<br>
+            {% for error in form.zipcode.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>

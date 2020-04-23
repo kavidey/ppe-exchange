@@ -67,7 +67,10 @@ def register():
                     email=form.email.data,
                     is_admin=False,
                     is_verified=False,
-                    hospital_address=form.address.data,
+                    hospital_street=form.street.data,
+                    hospital_city=form.city.data,
+                    hospital_state=form.state.data,
+                    hospital_zipcode=form.zipcode.data,
                     hospital_contact=form.contact.data,
                     hospital_id=form.hospital_name.data)
         user.set_password(form.password.data)
@@ -318,7 +321,7 @@ def admin_users():
         if user_hospital is not None:
             item["hospital"] = user_hospital.name
             item["contact"] = user.hospital_contact
-            item["address"] = user.hospital_address
+            item["address"] = user.hospital_street + ", " + user.hospital_city + ", " + user.hospital_state + " " + user.hospital_zipcode
         items.append(item)
     return render_template('admin_users.html', title='Users Dashboard', users=items)
 
@@ -329,12 +332,7 @@ def update_admin_users():
     if not current_user.is_authenticated:
         return jsonify(target="login?next="+data['state'])
     if data["task"] == "remove":
-        q = db.session.query(User)
-        q = q.filter(User.id == data["user_id"])
-        record = q.first()
-        record.is_verified = False
-        record.verification_key = None
-
+        User.query.filter_by(id=data["user_id"]).delete()
         db.session.commit()
     elif data["task"] == "verify":
         # Set user as generate verification key for user
@@ -350,8 +348,11 @@ def update_admin_users():
         q = db.session.query(Hospital)
         q = q.filter(Hospital.id == user.hospital_id)
         record = q.first()
-        record.address = user.hospital_address
         record.contact = user.hospital_contact
+        record.street = user.hospital_street
+        record.city = user.hospital_city
+        record.state = user.hospital_state
+        record.zipcode = user.hospital_zipcode
         
         db.session.commit()
 
@@ -383,7 +384,6 @@ def admin_hospitals():
         items.append({
             "id": item.id,
             "name": item.name,
-            "address": item.address,
             "credit": item.credit
         })
     return render_template('admin_hospitals.html', items=items)
@@ -398,7 +398,7 @@ def update_admin_hospital():
         if q.count() > 0:
             return "Hospital already exists"
         else:
-            h = Hospital(name=data["name"], address=data["address"])
+            h = Hospital(name=data["name"])
             db.session.add(h)
             db.session.commit()
     elif data["task"] == "remove":
@@ -409,7 +409,6 @@ def update_admin_hospital():
         q = q.filter(Hospital.id == data["id"])
         record = q.first()
         record.name = data["name"]
-        record.address = data["address"]
         db.session.commit()
     return jsonify(target="index")
 

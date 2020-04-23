@@ -3,6 +3,11 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, Selec
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
 from app.models import User, Hospital
 
+STATE_ABBREV = ('AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 
+                'HI', 'ID', 'IL', 'IN', 'IO', 'KS', 'KY', 'LA', 'ME', 'MD', 
+                'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 
+                'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 
+                'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY')
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -21,7 +26,10 @@ class RegistrationForm(FlaskForm):
         'Repeat Password', validators=[DataRequired(), EqualTo('password')])
     hospital_name = SelectField('Hospital', coerce=int)
     contact = StringField('Phone Number', validators=[DataRequired()])
-    address = StringField('Hospital Address', validators=[DataRequired()])
+    street = StringField('Street Address', validators=[DataRequired()])
+    city = StringField('City', validators=[DataRequired()])
+    state = SelectField('State', choices=[(state, state) for state in STATE_ABBREV], default="WA")
+    zipcode = StringField('Zipcode', validators=[DataRequired()])
     submit = SubmitField('Register')
 
 

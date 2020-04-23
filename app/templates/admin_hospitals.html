@@ -10,7 +10,7 @@
 	     <h2 class="modal-title">Remove Confirmation</h2>
 	   </div>
 	   <div class="modal-body">
-             <p>Are you sure you want to remove Hospital <span id="remove-hospital-name"></span></p>
+             <p>Are you sure you want to remove hospital: <span id="remove-hospital-name"></span>?</p>
 	   </div>
 	   <div class="modal-footer">
              <button id="yes" class="btn btn-danger" onclick="removeHospital()">Yes</button>
@@ -21,32 +21,26 @@
     </div>
 
     <div id="edit" class="modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-	<div class="modal-content">
-	  <div class="modal-header">
-	    <h2 class="modal-title">Edit <span id="edit-hospital-name"></span></h2>
-          </div>
-	  <div class="modal-body">
-            <div class="form-group row padded">
-              <label class="form-check-label col-sm-2 col-form-label" for="add-name"><b>Name:</b></label>
-	      <div class="col-sm-10">
-		<input class="form-control" id="edit-name" type="textarea">
-	      </div>
-	    </div>
-            <div class="form-group row padded">
-	      <label class="form-check-label col-sm-2 col-form-label" for="add-address"><b>Address:</b></label>
-	      <div class="col-sm-10">
-		<input class="form-control" id="edit-address" type="textarea">
-	      </div>
-	    </div>
-	    <br>
-	  </div>
-	  <div class="modal-footer">
-             <button id="yes" class="btn btn-primary" onclick="applyEdits()">Apply Edits</button>
-	     <button id="no" class="btn btn-info" onclick="hideEditPage()">Cancel</button>
-	 </div>	   
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Edit <span id="edit-hospital-name"></span></h2>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group row padded">
+                        <label class="form-check-label col-sm-2 col-form-label" for="add-name"><b>Name:</b></label>
+                        <div class="col-sm-10">
+                            <input class="form-control" id="edit-name" type="textarea">
+                        </div>
+                    </div>
+                    <br>
+                </div>
+                <div class="modal-footer">
+                        <button id="yes" class="btn btn-primary" onclick="applyEdits()">Apply Edits</button>
+                    <button id="no" class="btn btn-info" onclick="hideEditPage()">Cancel</button>
+                </div>	   
+            </div>
         </div>
-      </div>
     </div>
 
     <table class="table table-hover">
@@ -68,7 +62,7 @@
                     <td>{{ item.credit }} </td>
                     <td>
                             <button class="btn btn-danger" id="remove" onclick="checkRemoveHospital('{{ item.id }}', '{{ item.name }}')">Remove</button>
-                            <button id="edit" class="btn btn-primary" onclick="edit('{{ item.id }}', '{{ item.name }}', '{{ item.address }}')">Edit</button>
+                            <button id="edit" class="btn btn-primary" onclick="edit('{{ item.id }}', '{{ item.name }}')">Edit</button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -81,12 +75,6 @@
 	        <div class="col-sm-10">
 		        <input class="form-control" id="add-name" type="textarea">
 	        </div>
-	    </div>
-        <div class="form-group row padded">
-	        <label class="form-check-label col-sm-1 col-form-label" for="add-address"><b>Address:</b></label>
-	        <div class="col-sm-10">
-		        <input class="form-control" id="add-address" type="textarea">
-            </div>
             <br style="margin: 0; padding: 0;">
             <p>&nbsp;<button class="btn btn-success" style="margin-left:  1em; margin-bottom: 0; margin-top: 0;" onclick="addHospital()">Add</button></p>
         </div>
@@ -108,7 +96,6 @@
 
             item = {
                 "name": $("#add-name").val(),
-                "address": $("#add-address").val(),
                 "task": "add"
             }
             $.ajax({
@@ -163,7 +150,6 @@
             item = {
                 "id": to_edit,
                 "name": $('#edit-name').val(),
-                "address": $('#edit-address').val(),
                 "task": "edit"
             };
             $.ajax({
@@ -181,11 +167,10 @@
             });
         }
 
-        function edit(id, name, address) {
+        function edit(id, name) {
             to_edit = id;
             $('#edit-hospital-name').text(name);
             $('#edit-name').val(name);
-            $('#edit-address').val(address);
             $('#edit').show();
         }
 

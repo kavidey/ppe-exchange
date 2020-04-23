@@ -47,16 +47,37 @@
         </div>
     </div>
 
-    {% for item in items %}
-        <div class="items" >
-            <p>
-                <b>SKU <span class="sku">{{ item.sku }}</span>:</b> {{ item.desc }}
-                <img style="width: 200px;" src="{{ item.img }}">
-                <button id="remove" class="btn btn-danger" onclick="checkRemoveSKU('{{ item.sku }}')">Remove</button>
-                <button id="edit" class="btn btn-primary" onclick="edit('{{ item.sku }}', '{{ item.desc }}', '{{ item.img }}')">Edit</button>
-            </p>
-        </div>
-    {% endfor %}
+    <table class="table">
+        <thead>
+            <tr>
+            <th scope="col">SKU</th>
+            <th scope="col">Description</th>
+            <th scope="col">Image</th>
+            <th scope="col">Action</th>
+            </tr>
+        </thead>
+        <tbody> 
+            {% for item in items %}
+            <tr>
+                <div class="items" >
+                    <td scope="row">
+                        <span class="sku">{{ item.sku }}</span>
+                    </td>
+                    <td>
+                        {{ item.desc }}
+                    </td>
+                    <td>
+                        <img style="width: 200px;" src="{{ item.img }}">
+                    </td>
+                    <td>
+                        <button id="remove" class="btn btn-danger" onclick="checkRemoveSKU('{{ item.sku }}')">Remove</button>
+                        <button id="edit" class="btn btn-primary" onclick="edit('{{ item.sku }}', '{{ item.desc }}', '{{ item.img }}')">Edit</button>
+                    </td>
+                </div>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     <br>
     <div id="add" style="margin-left: 0.75em;">
         <div class="form-group row padded">

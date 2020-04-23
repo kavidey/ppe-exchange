@@ -1,4 +1,5 @@
-from ortools.graph import pywrapgraph
+import networkx as nx
+import matplotlib.pyplot as plt
 
 kCredits = 1
 kNormalizationFactor = 1
@@ -19,6 +20,30 @@ participants = {
         "normalization_factor": 1
     }
 }
+
+# Test1
+want = [
+    {
+        "hospital": "2",
+        "sku": "b",
+        "count": 125
+    },
+    {
+        "hospital": "3",
+        "sku": "b",
+        "count": 125
+    }
+]
+
+has = [
+    {
+        "hospital": "1",
+        "sku": "b",
+        "count": 200
+    }
+]
+
+# Test2
 
 want = [
     {
@@ -71,8 +96,9 @@ has = [
     }
 ]
 
+
 sku_supply_demand = {}
-node_id = 0
+node_id = 2
 for w in want:
     if w["sku"] not in sku_supply_demand:
         sku_supply_demand[w["sku"]] = {}
@@ -94,40 +120,36 @@ for h in has:
 exchanges = []
 
 for sku in sku_supply_demand:
-    start_nodes = []
-    end_nodes   = []
-    capacities  = []
-    unit_costs  = []
-    supplies = [0]*(node_id+1)
-
+    edges = []
     for h in sku_supply_demand[sku]["has"]:
-        supplies[h["node_id"]] = h["count"]
+        edges.append(
+            ("0", str(h["node_id"]), {'capacity': h["count"], 'weight': 0})
+        )
         for w in sku_supply_demand[sku]["want"]:
-            supplies[w["node_id"]] = -w["count"]
-            start_nodes.append(h["node_id"])
-            end_nodes.append(w["node_id"])
-            capacities.append(h["count"])
             hospital = participants[w["hospital"]]
-            weight = -hospital["credits"]*kCredits / hospital["normalization_factor"]*kNormalizationFactor
-            unit_costs.append(int(weight))
+            weight = int(-hospital["credits"]*kCredits / hospital["normalization_factor"]*kNormalizationFactor)
+            edges.append(
+                (str(h["node_id"]), str(w["node_id"]), {'capacity': h["count"], 'weight': weight})
+            )
+    for w in sku_supply_demand[sku]["want"]:
+        edges.append(
+            (str(w["node_id"]), "1", {'capacity': w["count"], 'weight': 0})
+        )
     
     print()
     print("---------------- "+sku+" ----------------")
-    print(start_nodes)
-    print(end_nodes)
-    print(capacities)
-    print(unit_costs)
-    print(supplies)
+    print(edges)
     
-    min_cost_flow = pywrapgraph.SimpleMinCostFlow()
+    G = nx.DiGraph()
 
-    for i in range(0, len(start_nodes)):
-        min_cost_flow.AddArcWithCapacityAndUnitCost(start_nodes[i], end_nodes[i],
-                                                capacities[i], unit_costs[i])
+    G.add_edges_from(edges)
 
-    for i in range(0, len(supplies)):
-        min_cost_flow.SetNodeSupply(i, supplies[i])
+    nx.draw(G,with_labels=True)
+    plt.savefig(sku+".png")
 
+    print(nx.max_flow_min_cost(G, '0', '1'))
+
+    '''
     if min_cost_flow.Solve() == min_cost_flow.OPTIMAL:
         print('Minimum cost:', min_cost_flow.OptimalCost())
         print('')
@@ -160,6 +182,8 @@ for sku in sku_supply_demand:
             }])
     else:
         print('There was an issue with the min cost flow input.')
+    
 
 print("\n\nResult:")
 print(exchanges)
+'''
