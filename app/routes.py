@@ -379,10 +379,12 @@ def admin_hospitals():
     hospitals = Hospital.query.all()
     items = []
     for item in hospitals:
+        print("id",item.id,"credit",item.credit)
         items.append({
             "id": item.id,
             "name": item.name,
-            "address": item.address
+            "address": item.address,
+            "credit": item.credit
         })
     return render_template('admin_hospitals.html', items=items)
 
