@@ -2,11 +2,9 @@ from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug import secure_filename
-from app import app, db
+from app import app, db, crypto, email
 from app.forms import LoginForm, RegistrationForm, VerifyForm, AdminAuthorizationForm
 from app.models import User, PPE, Hospital, Wants, Has, Exchanges, Exchange, EXCHANGE_COMPLETE, EXCHANGE_COMPLETE_TEXT, EXCHANGE_COMPLETE_ADMIN, EXCHANGE_COMPLETE_ADMIN_TEXT, EXCHANGE_COMPLETE_HOSPITAL_CANCELED, EXCHANGE_COMPLETE_HOSPITAL_CANCELED_TEXT, EXCHANGE_COMPLETE_ADMIN_CANCELED, EXCHANGE_COMPLETE_ADMIN_CANCELED_TEXT, EXCHANGE_UNVERIFIED, EXCHANGE_UNVERIFIED_TEXT, EXCHANGE_IN_PROGRESS, EXCHANGE_IN_PROGRESS_TEXT, EXCHANGE_NOT_ACCEPTED, EXCHANGE_ACCEPTED_NOT_SHIPPED, EXCHANGE_ACCEPTED_SHIPPED, EXCHANGE_ACCEPTED_RECEIVED, EXCHANGE_HOSPITAL_CANCELED, EXCHANGE_ADMIN_CANCELED
-from app import crypto
-from app import email
 from datetime import datetime
 
 import json
@@ -24,11 +22,35 @@ def index():
     else:
         user = User.query.filter_by(username=current_user.username).first()
         user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
+        ppe_types = PPE.query.all()
+
+        skus = []
+        for item in ppe_types:
+            wants = 0
+            has = 0
+			
+            try:
+                wants = Wants.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
+            except:
+                pass
+
+            try:
+                has = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
+            except:
+                pass
+
+            skus.append({
+                "sku": item.sku,
+                "desc": item.desc,
+                "img": item.img.decode(),
+                "has": has,
+                "wants": wants
+            })
         
         hospital = {
             "hospital_name": user_hospital.name
         }
-        return render_template('index.html', title='Home', hospital=hospital)
+        return render_template('index.html', title='Home', hospital=hospital, skus=skus)
 
 
 @app.route('/login', methods=['GET', 'POST'])

@@ -3,10 +3,54 @@
 {% block app_content %}
 <div class="content">
     <h1>Hi, {{ current_user.username }} from {{ hospital.hospital_name }} !</h1>
-    <p>
-    <button type="button" class="btn btn-primary" onclick="redirect('wants')">Want</button>
-    <button type="button" class="btn btn-success" onclick="redirect('has')">Have</button>
-    <button type="button" class="btn btn-warning" onclick="redirect('exchanges')">Exchange</button>
+    <div class="well current-exchanges">
+        <h2>Your Exchanges</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>With</th>
+                    <th>Status</th>
+                    <th>Receiving</th>
+                    <th>Giving</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>12</td>
+                    <td><a href="#">Virginia Mason</a></td>
+                    <td><span class="badge badge-secondary">Pending</span></td>
+                    <td>2000 N95, 300 P50</td>
+                    <td>5000 Surgical Masks</td>
+                    <td><a href="#">Details</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <h2>Your Inventory</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>SKU</th>
+                    <th>Description</th>
+                    <th>You Have</th>
+                    <th>You Want</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ppe in skus %}
+                <tr>
+                    <td><img class="itmimg" src="{{ ppe.img }}" alt="{{ ppe.desc }} mask image" width="150"/></td>
+                    <td><a href="/ppe/{{ppe.sku}}">{{ ppe.sku }}</a></td>
+                    <td><a href="/ppe/{{ppe.sku}}">{{ ppe.desc }}</a></td>
+                    <td>{{ ppe.has }}</td>
+                    <td>{{ ppe.wants }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     <script>
         function redirect(url) {
             document.location.href="/"+url;
