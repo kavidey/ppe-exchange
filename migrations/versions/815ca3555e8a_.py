@@ -1,14 +1,8 @@
 """empty message
 
-<<<<<<< HEAD:migrations/versions/4131a75cb8fd_.py
-Revision ID: 4131a75cb8fd
+Revision ID: 815ca3555e8a
 Revises: 
-Create Date: 2020-04-21 21:26:29.199631
-=======
-Revision ID: b5d77f1cb86b
-Revises: 
-Create Date: 2020-04-19 14:23:06.339199
->>>>>>> master:migrations/versions/b5d77f1cb86b_.py
+Create Date: 2020-04-27 21:21:00.544848
 
 """
 from alembic import op
@@ -16,11 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-<<<<<<< HEAD:migrations/versions/4131a75cb8fd_.py
-revision = '4131a75cb8fd'
-=======
-revision = 'b5d77f1cb86b'
->>>>>>> master:migrations/versions/b5d77f1cb86b_.py
+revision = '815ca3555e8a'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -39,6 +29,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('timestamp', sa.DateTime(), nullable=True),
     sa.Column('contact', sa.String(length=140), nullable=True),
+    sa.Column('address', sa.String(length=140), nullable=True),
     sa.Column('street', sa.String(length=128), nullable=True),
     sa.Column('city', sa.String(length=128), nullable=True),
     sa.Column('state', sa.String(length=128), nullable=True),
