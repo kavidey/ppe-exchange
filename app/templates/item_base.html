@@ -3,14 +3,6 @@
 {% block app_content %}
 <div class="content">
     <h1>{{ hospital.hospital_name }} {{ state }}</h1>
-
-    <p>You can only edit the counts of PPE for which you haven't expressed a
-    {% if state=="Wants" %}
-        supply of.
-    {% else %}
-        need for.
-    {% endif %}
-    </p>
    {% for item in items %}
 
     <div class="container bg-light {% if not item.grey_out %} sku-wrapper {% endif %}">
@@ -23,7 +15,7 @@
                 <p><b>SKU <span class="sku">{{ item.sku }}</span></b> {{ item.desc }}<br>
 Count
                 {% if item.grey_out %} 
-                        <input class="form-control count disabled-input" type="text" pattern="[0-9]" placeholder="{{ item.count }}" readonly>
+                        <input class="form-control count disabled-input" data-toggle="tooltip" title="You cannot edit this" type="text" pattern="[0-9]" placeholder="{{ item.count }}" readonly>
                 {% else %}
                     <input class="form-control count" type="text" pattern="[0-9]" placeholder="{{ item.count }}" />
                 {% endif %}
@@ -37,13 +29,16 @@ Count
     {% endfor %}
 </div>
 <script>
-    $('disabled-input').each( function() {
-        {% if state=="Wants" %} 
-        var title="Not editable because you have indicated a supply of this PPE." ;
-        {% else %} 
-        var title="Not editable because you have indicated a demand for this PPE.";
-        {% endif %}
-        $(this).tooltip({'trigger': 'focus', 'title': title);
+    $(document).ready(function(){
+        $('.disabled-input').each( function() {
+            {% if state=="Wants" %} 
+            var title="Not editable because you have indicated a supply of this PPE." ;
+            {% else %} 
+            var title="Not editable because you have indicated a demand for this PPE.";
+            {% endif %}
+            $(this).attr("title", title);
+        });
+        $('[data-toggle="tooltip"]').tooltip();
     });
     function submit() {
         var items = [];
