@@ -8,11 +8,18 @@ from app.models import User, PPE, Hospital, Wants, Has, Exchanges, Exchange, EXC
 from app import crypto
 from app import email
 from datetime import datetime
-from sqlalchemy import desc
+from sqlalchemy import desc, and_
+from sqlalchemy.orm import contains_eager
 
 import json
 import os
 import math
+import inspect
+
+
+import logging
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 @app.route('/')
 @app.route('/index')
@@ -26,39 +33,18 @@ def index():
     else:
         user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
 
-        wants = Wants.query.filter_by(hospital_id=user_hospital.id).join(PPE).all()
-        has = Has.query.filter_by(hospital_id=user_hospital.id).join(PPE).all()
-        ppe_types = PPE.query.all()
+        ppe_types = PPE.query.\
+            outerjoin(Wants, and_(Wants.hospital_id == user_hospital.id, Wants.ppe_id == PPE.id)).\
+            outerjoin(Has, and_(Has.hospital_id == user_hospital.id, Has.ppe_id == PPE.id)).\
+            options(contains_eager(PPE.wants)).\
+            options(contains_eager(PPE.has)).\
+            all()
 
-        # ppe_types = PPE.query.all()
-
-        # wants = []
-        # for item in ppe_types:
-        #     wants = 0
-        #     has = 0
-			
-        #     try:
-        #         wants = Wants.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
-        #     except:
-        #         pass
-
-        #     try:
-        #         has = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
-        #     except:
-        #         pass
-
-        #     skus.append({
-        #         "sku": item.sku,
-        #         "desc": item.desc,
-        #         "img": item.img.decode(),
-        #         "has": has,
-        #         "wants": wants
-        #     })
         
         hospital = {
             "hospital_name": user_hospital.name
         }
-        return render_template('index.html', title='Home', hospital=hospital, wants=wants, has=has, ppe_types=ppe_types)
+        return render_template('index.html', title='Home', hospital=hospital, ppe_types=ppe_types)
 
 
 @app.route('/login', methods=['GET', 'POST'])

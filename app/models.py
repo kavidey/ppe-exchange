@@ -46,10 +46,10 @@ class Hospital(db.Model):
     zipcode = db.Column(db.String(128), default="")
     name = db.Column(db.String(140), default="")
     credit = db.Column(db.Integer, default=0)
-    wants = db.relationship('Wants', backref='hospital', lazy='dynamic')
-    has = db.relationship('Has', backref='hospital', lazy='dynamic')
-    users = db.relationship('User', backref='hospital', lazy='dynamic')
-    exchange = db.relationship('Exchange', backref='hospital', lazy='dynamic')
+    wants = db.relationship('Wants', backref='hospital')
+    has = db.relationship('Has', backref='hospital')
+    users = db.relationship('User', backref='hospital')
+    exchange = db.relationship('Exchange', backref='hospital')
 
     def __repr__(self):
         return '<Hospital {}>'.format(self.name)
@@ -61,14 +61,14 @@ class PPE(db.Model):
     sku = db.Column(db.String(16), index=True)
     desc = db.Column(db.String(200))
     img = db.Column(db.BLOB())
-    wants = db.relationship('Wants', backref='ppe', lazy='dynamic')
-    has = db.relationship('Has', backref='ppe', lazy='dynamic')
+    wants = db.relationship('Wants', backref='ppe')
+    has = db.relationship('Has', backref='ppe')
     # FIXME: there's already a `ppe` property on Exchange (should be called ppe_id), but I don't
     # want to change it.
-    exchange = db.relationship('Exchange', backref='ppe_ref', lazy='dynamic')
+    exchange = db.relationship('Exchange', backref='ppe_ref')
 
     def __repr__(self):
-        return '<PPE {}>'.format(self.sku)
+        return '<PPE id={} sku={}>'.format(self.id, self.sku)
 
 class Wants(db.Model):
     __tablename__ = "wants"
@@ -79,7 +79,7 @@ class Wants(db.Model):
     count = db.Column(db.Integer)
 
     def __repr__(self):
-        return '<Wants {}>'.format(self.count)
+        return '<Want id={} hospital_id={} ppe_id={} count={}>'.format(self.id, self.hospital_id, self.ppe_id, self.count)
 
 class Has(db.Model):
     __tablename__ = "has"
@@ -90,7 +90,7 @@ class Has(db.Model):
     count = db.Column(db.Integer)
 
     def __repr__(self):
-        return '<Has {}>'.format(self.count)
+        return '<Has id={} hospital_id={} ppe_id={} count={}>'.format(self.id, self.hospital_id, self.ppe_id, self.count)
 
 # EXCHANGE_STATUS
 # algorithm has proposed an exchange, but exchange has not been verified by admin yet: NOT_VERIFIED = 0
@@ -125,7 +125,7 @@ class Exchanges(db.Model):
     created_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     updated_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.Integer,default=EXCHANGE_ADMIN_NOT_VERIFIED)
-    exchange = db.relationship('Exchange', backref='exchanges', lazy='dynamic')
+    exchange = db.relationship('Exchange', backref='exchanges')
 
     def __repr__(self):
         return '<Exchanges {}>'.format(self.id)
