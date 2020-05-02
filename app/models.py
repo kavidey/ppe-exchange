@@ -38,11 +38,14 @@ class Hospital(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     contact = db.Column(db.String(140), default="")
+    address = db.Column(db.String(140), default="")
+    name = db.Column(db.String(140))
     street = db.Column(db.String(128), default="")
     city = db.Column(db.String(128), default="")
     state = db.Column(db.String(128), default="")
     zipcode = db.Column(db.String(128), default="")
     name = db.Column(db.String(140), default="")
+    credit = db.Column(db.Integer, default=0)
     wants = db.relationship('Wants', backref='author1', lazy='dynamic')
     has = db.relationship('Has', backref='author2', lazy='dynamic')
     users = db.relationship('User', backref='author3', lazy='dynamic')
@@ -88,6 +91,8 @@ class Has(db.Model):
         return '<Has {}>'.format(self.count)
 
 # EXCHANGE_STATUS
+# algorithm has proposed an exchange, but exchange has not been verified by admin yet: NOT_VERIFIED = 0
+EXCHANGE_ADMIN_NOT_VERIFIED = 0
 # normal completion: EXCHANGE_COMPLETE = 1
 EXCHANGE_COMPLETE = 1
 EXCHANGE_COMPLETE_TEXT = "Complete"
@@ -117,7 +122,7 @@ class Exchanges(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     created_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     updated_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    status = db.Column(db.Integer)
+    status = db.Column(db.Integer,default=EXCHANGE_ADMIN_NOT_VERIFIED)
     exchange = db.relationship('Exchange', backref='author8', lazy='dynamic')
 
     def __repr__(self):
@@ -145,12 +150,12 @@ class Exchange(db.Model):
     updated_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     exchange_id = db.Column(db.Integer, db.ForeignKey('exchanges.id'))
     hospital1 = db.Column(db.Integer, db.ForeignKey('hospital.id'))
-    hospital1_accept = db.Column(db.Integer)
+    hospital1_accept = db.Column(db.Integer, default=0)
     hospital2 = db.Column(db.Integer)
-    hospital2_accept = db.Column(db.Integer)
+    hospital2_accept = db.Column(db.Integer, default=0)
     ppe = db.Column(db.Integer, db.ForeignKey('ppe.id'))
     count = db.Column(db.Integer)
-    status = db.Column(db.Integer)
+    status = db.Column(db.Integer, default=EXCHANGE_NOT_ACCEPTED)
     is_h1_verified = db.Column(db.Boolean(), default=False)
     is_h2_verified = db.Column(db.Boolean(), default=False)
     is_h1_shipped = db.Column(db.Boolean(), default=False)

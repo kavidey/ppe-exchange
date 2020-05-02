@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <h1>Create Exchange</h1>
+
+    <
+    <table class="table table-hover">
+        <thead>
+            <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Created</th>
+            <th scope="col">Updated</th>
+            <th scope="col">Exchange</th>
+            <th scope="col">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ex in exchanges %}
+            <tr>
+                <th scope="row">{{ ex.id }}</th>
+                <td>{{ ex.created_timestamp }}</td>
+                <td>{{ ex.updated_timestamp }}</td>
+                <td>
+                    <table>
+                        {% for e in ex.exchanges %}
+                        <tr><td> {{ e.h1 }} giving {{ e.h2 }} {{ e.count }} instances of {{ e.ppe }}</td></tr>
+                        {% endfor %}
+                    </table>
+                </td>
+                <td>{{ ex.status_text }}</td>
+                <td>{% if ex.status>10 %}
+                        <button onclick="cancelExchange('{{ ex.id }}', 'cancel')" type="button" class="btn btn-danger btn-sm">Cancel</button>
+                    {% else %}
+                        <P></P>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script>
+        var data = {};
+        $("#delete-check").hide()
+
+        function cancelExchange(exchange_id, task) {
+            data = {exchange_id: exchange_id, task: task};
+            $("#delete-check").show();
+            $("#remove-item-name").text(exchange_id);
+        }
+ 
+        function removeExchange() {
+            $.ajax({
+                url: "/update_admin_exchanges",
+                type: "POST",
+                contentType:'application/json',
+                data: JSON.stringify(data),
+                dataType:'json',
+		        success: function(result) {
+                    location.reload();
+                },
+                error: function(result) {
+                    alert("There was an error please reload and try again");
+                }
+            });
+        }
+
+        function hideDeleteCheck() {
+            $("#delete-check").hide();
+        }
+
+    </script>
+{% endblock %}
