@@ -24,37 +24,41 @@ def index():
     elif not user.is_verified:
         return render_template("404.html")
     else:
-        user = User.query.filter_by(username=current_user.username).first()
         user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
+
+        wants = Wants.query.filter_by(hospital_id=user_hospital.id).join(PPE).all()
+        has = Has.query.filter_by(hospital_id=user_hospital.id).join(PPE).all()
         ppe_types = PPE.query.all()
 
-        skus = []
-        for item in ppe_types:
-            wants = 0
-            has = 0
+        # ppe_types = PPE.query.all()
+
+        # wants = []
+        # for item in ppe_types:
+        #     wants = 0
+        #     has = 0
 			
-            try:
-                wants = Wants.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
-            except:
-                pass
+        #     try:
+        #         wants = Wants.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
+        #     except:
+        #         pass
 
-            try:
-                has = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
-            except:
-                pass
+        #     try:
+        #         has = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
+        #     except:
+        #         pass
 
-            skus.append({
-                "sku": item.sku,
-                "desc": item.desc,
-                "img": item.img.decode(),
-                "has": has,
-                "wants": wants
-            })
+        #     skus.append({
+        #         "sku": item.sku,
+        #         "desc": item.desc,
+        #         "img": item.img.decode(),
+        #         "has": has,
+        #         "wants": wants
+        #     })
         
         hospital = {
             "hospital_name": user_hospital.name
         }
-        return render_template('index.html', title='Home', hospital=hospital, skus=skus)
+        return render_template('index.html', title='Home', hospital=hospital, wants=wants, has=has, ppe_types=ppe_types)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -211,6 +215,59 @@ def has():
         "hospital_name": user_hospital.name
     }
     return render_template('item_base.html', title='Have', hospital=hospital, state="Has", items=items)
+
+
+@app.route('/update-ppe/wants', methods=['POST'])
+def update_ppe():
+    if not current_user.is_authenticated:
+        return redirect(url_for("login", next="/"))
+    
+    user = User.query.filter_by(username=current_user.username).first()
+    user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
+
+    Model = Wants
+
+    q = db.session.query(Model)
+
+    for key, quantity in request.form.items():
+        # key format is in ppe-ID for quantities, so make sure we're looking at the right thing.
+        if not key[:4] == "ppe-": continue
+        ppe_id = key[4:]
+        quantity = int(quantity)
+
+        current = Model.query.filter_by(hospital_id=user_hospital.id, ppe_id=ppe_id).first()
+
+        if current is None:
+            if quantity == 0: continue # don't need to delete a nonexistant entry
+            db.session.add(Model(hospital_id=user_hospital.id, ppe_id=ppe_id, count=quantity))
+        elif quantity == 0:
+            db.session.delete(current)
+        else:
+            current.count = quantity
+
+    db.session.commit()
+    return redirect(url_for('index'))
+    # elif data["state"] == "has":
+    #     q = db.session.query(Has)
+    #     for item in data["items"]:
+    #         ppe_id = PPE.query.filter_by(sku=item["sku"]).first().id
+
+    #         old_count = 0
+    #         count_query = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=ppe_id).first()
+    #         if count_query:
+    #             old_count = count_query.count
+            
+    #         if old_count > 0 and item["count"] > 0:
+    #             f = q.filter(Has.ppe_id == ppe_id)
+    #             record = f.first()
+    #             record.count = item["count"]
+    #         elif old_count > 0 and item["count"] == 0:
+    #             Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=ppe_id).delete()
+    #         elif old_count == 0 and item["count"] > 0:
+    #             h = Has(hospital_id=user_hospital.id, ppe_id=ppe_id, count=item["count"])
+    #             db.session.add(h)
+    #     db.session.commit()
+    # return jsonify(target=data['state'])
 
 @app.route('/update_want_need', methods=['GET', 'POST'])
 def update_want_need():

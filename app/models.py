@@ -46,10 +46,10 @@ class Hospital(db.Model):
     zipcode = db.Column(db.String(128), default="")
     name = db.Column(db.String(140), default="")
     credit = db.Column(db.Integer, default=0)
-    wants = db.relationship('Wants', backref='author1', lazy='dynamic')
-    has = db.relationship('Has', backref='author2', lazy='dynamic')
-    users = db.relationship('User', backref='author3', lazy='dynamic')
-    exchange = db.relationship('Exchange', backref='author7', lazy='dynamic')
+    wants = db.relationship('Wants', backref='hospital', lazy='dynamic')
+    has = db.relationship('Has', backref='hospital', lazy='dynamic')
+    users = db.relationship('User', backref='hospital', lazy='dynamic')
+    exchange = db.relationship('Exchange', backref='hospital', lazy='dynamic')
 
     def __repr__(self):
         return '<Hospital {}>'.format(self.name)
@@ -61,9 +61,11 @@ class PPE(db.Model):
     sku = db.Column(db.String(16), index=True)
     desc = db.Column(db.String(200))
     img = db.Column(db.BLOB())
-    wants = db.relationship('Wants', backref='author4', lazy='dynamic')
-    has = db.relationship('Has', backref='author5', lazy='dynamic')
-    exchange = db.relationship('Exchange', backref='author6', lazy='dynamic')
+    wants = db.relationship('Wants', backref='ppe', lazy='dynamic')
+    has = db.relationship('Has', backref='ppe', lazy='dynamic')
+    # FIXME: there's already a `ppe` property on Exchange (should be called ppe_id), but I don't
+    # want to change it.
+    exchange = db.relationship('Exchange', backref='ppe_ref', lazy='dynamic')
 
     def __repr__(self):
         return '<PPE {}>'.format(self.sku)
@@ -123,7 +125,7 @@ class Exchanges(db.Model):
     created_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     updated_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.Integer,default=EXCHANGE_ADMIN_NOT_VERIFIED)
-    exchange = db.relationship('Exchange', backref='author8', lazy='dynamic')
+    exchange = db.relationship('Exchange', backref='exchanges', lazy='dynamic')
 
     def __repr__(self):
         return '<Exchanges {}>'.format(self.id)
