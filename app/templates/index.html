@@ -1,14 +1,12 @@
 {% extends "base.html" %}
 
 {% macro ppe_row(ppe) %}
-<tr>
-    <td><img class="itmimg" src="{{ ppe.img.decode() }}" alt="{{ ppe.desc }} mask image" width="150" /></td>
-    <td>{{ ppe.sku }}</td>
-    <td>{{ ppe.desc }}</td>
-    <td>
-        {{ caller() }}
-    </td>
-</tr>
+<td><img class="itmimg" src="{{ ppe.img.decode() }}" alt="{{ ppe.desc }} mask image" width="150" /></td>
+<td>{{ ppe.sku }}</td>
+<td>{{ ppe.desc }}</td>
+<td>
+    {{ caller() }}
+</td>
 {% endmacro %}
 
 {% macro active_ppe_row(ppe) %}
@@ -22,8 +20,55 @@
 {% endif %}
 {% call ppe_row(ppe) %}
 <span class="no-edit">{{ count }}</span>
-<input class="form-control" name="ppe-{{ppe.id}}" type="number" min="0" max="999999999" step="1" value="{{count}}" />
+<input class="form-control" id="ppe-quantity-{{ppe.id}}" name="ppe-{{ppe.id}}" type="number" min="0" max="999999999" step="1" value="{{count}}" />
+<button class="btn btn-danger only-edit" onclick="document.getElementById('ppe-quantity-{{ppe.id}}').value = '0'; $(this).parent().parent().hide(); return false">
+    <i class="glyphicon glyphicon-remove"></i> Delete
+</button>
 {% endcall %}
+{% endmacro %}
+
+{% macro ppe_selector(name, title) %}
+<div id="{{ name }}" class="ppe-container">
+    <form action="/update-ppe/{{ name }}" method="POST">
+        <h2>
+            PPE Types You {{ title }}
+            <button data-target="#{{ name }}" class="btn btn-primary no-edit start-edit"><span
+                    class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Edit</button>
+        </h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>SKU</th>
+                    <th>Description</th>
+                    <th>Quantity Wanted</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="only-edit" id="add-ppe-row-{{ name }}">
+                    <td colspan="4">
+                        <div
+                            style="display: flex; width: 100%; align-items: center; justify-content: space-between; flex-direction: row;">
+                            <button class="btn btn-default"
+                                onclick="window.document.location.reload(); return false">Cancel</button>
+                            <button class="btn btn-success start-add-ppe" data-target="{{ name }}">
+                                <i class="glyphicon glyphicon-plus" aria-hidden="true"></i> Add PPE Type
+                            </button>
+                            <button class="btn btn-primary">Save</button>
+                        </div>
+                    </td>
+                </tr>
+                {% for ppe in ppe_types %}
+                {% if ppe[name]|length > 0 %}
+                <tr>
+                    {{ active_ppe_row(ppe) }}
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
+</div>
 {% endmacro %}
 
 {% block app_content %}
@@ -49,6 +94,12 @@
                     </thead>
                     <tbody>
                         {% for ppe in ppe_types %}
+                        {% if ppe.wants|length > 0 or ppe.has|length > 0 %}
+                            {% set hidden = "hidden" %}
+                        {% else %}
+                            {% set hidden = "" %}
+                        {% endif %}
+                        <tr data-searchable="{{ ppe.desc }} {{ ppe.sku }}" {{ hidden }} id="add-ppe-type-result-{{ ppe.id }}">
                         {% call ppe_row(ppe) %}
                             {% if ppe.wants|length > 0 %}
                                 <i>You already want this PPE!</i>
@@ -64,10 +115,13 @@
                                     JS reads it.
                                 -->
                                 <script type="text/html" id="ppe-row-template-{{ppe.id}}">
+                                    <tr>
                                     {{ active_ppe_row(ppe) }}
+                                    </tr>
                                 </script>
                             {% endif %}
                         {% endcall %}
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -106,43 +160,10 @@
             </tbody>
         </table>
     </div>
-    <div id="wants" class="ppe-container">
-        <form action="/update-ppe/wants" method="POST">
-    <h2>
-        PPE Types You Want
-        <button data-target="#wants" class="btn btn-primary no-edit start-edit"><span class="glyphicon glyphicon-pencil" aria-hidden="true" ></span> Edit</button>
-    </h2>
-    <p class="help-text only-edit">Set a PPE's quantity to 0 to delete.</p>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Image</th>
-                <th>SKU</th>
-                <th>Description</th>
-                <th>Quantity Wanted</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr class="only-edit" id="add-ppe-row">
-                <td colspan="4">
-                    <div style="display: flex; width: 100%; align-items: center; justify-content: space-between; flex-direction: row;">
-                        <button class="btn btn-default" onclick="window.document.location.reload(); return false">Cancel</button>
-                        <button class="btn btn-success" data-toggle="modal" data-target="#add-ppe-modal" onclick="return false;">
-                            <i class="glyphicon glyphicon-plus" aria-hidden="true"></i> Add PPE Type
-                        </button>
-                        <button class="btn btn-primary">Save</button>
-                    </div>
-                </td>
-            </tr>
-            {% for ppe in ppe_types %}
-            {% if ppe.wants|length > 0 %}
-            {{ active_ppe_row(ppe) }}
-            {% endif %}
-            {% endfor %}
-        </tbody>
-    </table>
-</form>
-    </div>
+
+    {{ ppe_selector('wants', 'Want') }}
+
+    {{ ppe_selector('has', 'Have') }}
 </div>
 <style>
     .ppe-container:not(.edit) input:not(.no-edit),
@@ -159,19 +180,33 @@
 
     $('#add-ppe-type-search').keyup(function () {
         var query = $(this).val().toUpperCase()
-        $('#add-ppe-types > tbody > tr').each(function () {
+        $('#add-ppe-types tr').each(function () {
             var self = $(this)   
+            if (!self.data('searchable')) return
             // data-searchable is uppercased in the template for efficiency
             if (self.data('searchable').indexOf(query) === -1) self.hide()
             else self.show()
         })
     })
 
-    $('button.add-ppe-type').click(function () {
-        var ppeID = $(this).data('id')
-        $('#add-ppe-row').after(
+    var target;
+    $('button.add-ppe-type').click(function (e) {
+        if (!target) return
+        e.preventDefault()
+        var self = $(this)
+        var ppeID = self.data('id')
+        $('#add-ppe-row-' + target).after(
             $('#ppe-row-template-' + ppeID).html()
         )
+        $('#add-ppe-modal').modal('hide')
+        $('#add-ppe-type-result-' + ppeID).remove()
+    })
+
+    $('.start-add-ppe').click(function(e) {
+        e.preventDefault()
+        var self = $(this)
+        target = self.data('target')
+        $('#add-ppe-modal').modal('show')
     })
 </script>
 {% endblock %}

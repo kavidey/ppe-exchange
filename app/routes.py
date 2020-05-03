@@ -40,7 +40,6 @@ def index():
             options(contains_eager(PPE.has)).\
             all()
 
-        
         hospital = {
             "hospital_name": user_hospital.name
         }
@@ -203,15 +202,24 @@ def has():
     return render_template('item_base.html', title='Have', hospital=hospital, state="Has", items=items)
 
 
-@app.route('/update-ppe/wants', methods=['POST'])
-def update_ppe():
+@app.route('/update-ppe/<name>', methods=['POST'])
+def update_ppe(name):
     if not current_user.is_authenticated:
         return redirect(url_for("login", next="/"))
     
+    Model = None
+
+    if name == "wants":
+        Model = Wants
+    elif name == "has":
+        Model = Has
+    else:
+        return 404
+
+    OtherModel = Has if Model is Wants else Wants
+    
     user = User.query.filter_by(username=current_user.username).first()
     user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
-
-    Model = Wants
 
     q = db.session.query(Model)
 
@@ -223,6 +231,10 @@ def update_ppe():
 
         current = Model.query.filter_by(hospital_id=user_hospital.id, ppe_id=ppe_id).first()
 
+        if quantity != 0:
+            other = OtherModel.query.filter_by(hospital_id=user_hospital.id, ppe_id=ppe_id).first()
+            if other is not None: db.session.delete(other)
+
         if current is None:
             if quantity == 0: continue # don't need to delete a nonexistant entry
             db.session.add(Model(hospital_id=user_hospital.id, ppe_id=ppe_id, count=quantity))
@@ -233,27 +245,6 @@ def update_ppe():
 
     db.session.commit()
     return redirect(url_for('index'))
-    # elif data["state"] == "has":
-    #     q = db.session.query(Has)
-    #     for item in data["items"]:
-    #         ppe_id = PPE.query.filter_by(sku=item["sku"]).first().id
-
-    #         old_count = 0
-    #         count_query = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=ppe_id).first()
-    #         if count_query:
-    #             old_count = count_query.count
-            
-    #         if old_count > 0 and item["count"] > 0:
-    #             f = q.filter(Has.ppe_id == ppe_id)
-    #             record = f.first()
-    #             record.count = item["count"]
-    #         elif old_count > 0 and item["count"] == 0:
-    #             Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=ppe_id).delete()
-    #         elif old_count == 0 and item["count"] > 0:
-    #             h = Has(hospital_id=user_hospital.id, ppe_id=ppe_id, count=item["count"])
-    #             db.session.add(h)
-    #     db.session.commit()
-    # return jsonify(target=data['state'])
 
 @app.route('/update_want_need', methods=['GET', 'POST'])
 def update_want_need():
