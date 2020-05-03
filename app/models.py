@@ -128,7 +128,7 @@ class Exchanges(db.Model):
     exchange = db.relationship('Exchange', backref='exchanges')
 
     def __repr__(self):
-        return '<Exchanges {}>'.format(self.id)
+        return '<Exchanges id={} status={} exchanges=\n\t{}\n>'.format(self.id, self.status, "\n\t".join(map(repr, self.exchange)))
 
 # HOSPITAL_EXCHANGE_STATUS
 # algorithm has proposed an exchange, but exchange has not been accepted by hospital yet: NOT_ACCEPTED = 1
@@ -164,4 +164,5 @@ class Exchange(db.Model):
     is_h2_received = db.Column(db.Boolean(), default=False)
     
     def __repr__(self):
-        return '<Has {}>'.format(self.id)
+        return '<Exchange id={} exchanges_id={} h1={} (accept: {}, verify: {}, shipped: {}) h2={} (accept: {}, verify: {}, received: {}) ppe_id={} count={} status={}>'.\
+            format(self.id, self.exchange_id, self.hospital1, self.hospital1_accept, self.is_h1_verified, self.is_h1_shipped, self.hospital2, self.hospital2_accept, self.is_h2_verified, self.is_h2_received, self.ppe, self.count, self.status)

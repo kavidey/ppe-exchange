@@ -8,7 +8,7 @@ from app.models import User, PPE, Hospital, Wants, Has, Exchanges, Exchange, EXC
 from app import crypto
 from app import email
 from datetime import datetime
-from sqlalchemy import desc, and_
+from sqlalchemy import desc, and_, or_
 from sqlalchemy.orm import contains_eager
 
 import json
@@ -30,20 +30,72 @@ def index():
         return render_template('admin_index.html', title='Home')
     elif not user.is_verified:
         return render_template("404.html")
-    else:
-        user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
 
-        ppe_types = PPE.query.\
-            outerjoin(Wants, and_(Wants.hospital_id == user_hospital.id, Wants.ppe_id == PPE.id)).\
-            outerjoin(Has, and_(Has.hospital_id == user_hospital.id, Has.ppe_id == PPE.id)).\
-            options(contains_eager(PPE.wants)).\
-            options(contains_eager(PPE.has)).\
-            all()
+    user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
 
-        hospital = {
-            "hospital_name": user_hospital.name
-        }
-        return render_template('index.html', title='Home', hospital=hospital, ppe_types=ppe_types)
+    ppe_types = PPE.query.\
+        outerjoin(Wants, and_(Wants.hospital_id == user_hospital.id, Wants.ppe_id == PPE.id)).\
+        outerjoin(Has, and_(Has.hospital_id == user_hospital.id, Has.ppe_id == PPE.id)).\
+        options(contains_eager(PPE.wants)).\
+        options(contains_eager(PPE.has)).\
+        all()
+
+    user_id = User.query.filter_by(username=current_user.username).first().id
+    hospital_id = User.query.filter_by(id=user_id).first().hospital_id
+   
+    exchange_subquery = Exchange.query.\
+        filter(or_(Exchange.hospital1==hospital_id, Exchange.hospital2 == hospital_id)).\
+        join(PPE).\
+        options(contains_eager(Exchange.ppe_ref)).\
+        subquery()
+    
+    exchanges = Exchanges.query.\
+        filter(Exchanges.status.in_([EXCHANGE_ADMIN_NOT_VERIFIED, EXCHANGE_IN_PROGRESS, EXCHANGE_UNVERIFIED])).\
+        join(exchange_subquery).\
+        options(contains_eager(Exchanges.exchange)).\
+        all()
+
+    items = []
+    for ex in exchanges:
+        verify1 = True
+        verify2 = True
+        its = []
+        # verify(1/2) = has this hospital verified this whole exchange?
+        for inner in ex.exchange:
+            if hospital_id == inner.hospital1 and not inner.is_h1_verified:
+                verify1 = False
+            elif hospital_id == inner.hospital2 and not inner.is_h2_verified:
+                verify2 = False
+            i = {
+                "id": inner.id,
+                "h1_name": Hospital.query.filter_by(id = inner.hospital1).first().name,
+                "h1": inner.hospital1,
+                "h2_name": Hospital.query.filter_by(id = inner.hospital2).first().name,
+                "h2": inner.hospital2,
+                "ppe": PPE.query.filter_by(id = inner.ppe).first().sku,
+                "count": inner.count,
+                "status": inner.status,
+                "is_verified": inner.is_h1_verified and inner.is_h2_verified,
+                "is_shipped": inner.is_h1_shipped,
+                "is_received": inner.is_h2_received
+            }
+            its.append(i)
+        items.append({
+            "exchange_sid": ex.id,
+            "exchange_status": ex.status,
+            "exchange_created": ex.created_timestamp,
+            "exchange_updated": ex.updated_timestamp,
+            "exchanges": its,
+            "verify1": verify1,
+            "verify2": verify2
+        })
+
+    hospital = {
+        "hospital_name": user_hospital.name,
+        "hospital_id": hospital_id
+    }
+    
+    return render_template('index.html', title='Home', hospital=hospital, ppe_types=ppe_types, exchanges=items)
 
 
 @app.route('/login', methods=['GET', 'POST'])
