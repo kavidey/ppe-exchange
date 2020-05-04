@@ -123,6 +123,7 @@ def wants():
     for item in skus:
         count = 0
         count_other = 0
+        total_count_has = 0
         try:
             count = Wants.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
         except:
@@ -133,12 +134,21 @@ def wants():
         except:
             count_other = 0
 
+        # get total number of Has for this ppe
+        try:
+            has = Has.query.filter_by(ppe_id=item.id)
+            for ha in has:
+                total_count_has += ha.count
+        except:
+            total_count_has = 0
+
         items.append({
             "sku": item.sku,
             "desc": item.desc,
             "img": item.img.decode(),
             "count": count,
-            "grey_out": count_other > 0
+            "grey_out": count_other > 0,
+            "other": total_count_has
         })
 
     hospital = {
@@ -163,6 +173,7 @@ def has():
     for item in skus:
         count = 0
         count_other = 0
+        total_count_wants = 0
         try:
             count = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
         except:
@@ -173,6 +184,14 @@ def has():
         except:
             count_other = 0
 
+        # get total number of Wants for this ppe
+        try:
+            wants = Wants.query.filter_by(ppe_id=item.id)
+            for want in wants:
+                total_count_wants += want.count
+        except:
+            total_count_wants = 0
+
         print(str(count) +", "+str(count_other))
         
         items.append({
@@ -180,7 +199,8 @@ def has():
             "desc": item.desc,
             "img": item.img.decode(),
             "count": count,
-            "grey_out": count_other > 0
+            "grey_out": count_other > 0,
+            "other": total_count_wants
         })
 
     hospital = {
@@ -247,10 +267,28 @@ def admin_sku():
     skus = PPE.query.all()
     items = []
     for item in skus:
+
+        ha = []
+        for have in Has.query.filter_by(ppe_id=item.id):
+            hosp = Hospital.query.filter_by(id=have.hospital_id).first()
+            ha.append({
+                "hospital": hosp.name,
+                "count": have.count,
+            })
+        wa = []
+        for want in Wants.query.filter_by(ppe_id=item.id):
+            hosp = Hospital.query.filter_by(id=want.hospital_id).first()
+            wa.append({
+                "hospital": hosp.name,
+                "count": want.count
+            })
+
         items.append({
             "sku": item.sku,
             "desc": item.desc,
-            "img": item.img.decode()
+            "img": item.img.decode(),
+            "haves": ha,
+            "wants": wa
         })
     return render_template('admin_sku.html', title='Have', items=items)
 
@@ -382,10 +420,27 @@ def admin_hospitals():
     items = []
     for item in hospitals:
         print("id",item.id,"credit",item.credit)
+        ha = []
+        for have in Has.query.filter_by(hospital_id=item.id):
+            ppe = PPE.query.filter_by(id=have.ppe_id).first()
+            ha.append({
+                "ppe": ppe.sku,
+                "count": have.count,
+            })
+        wa = []
+        for want in Wants.query.filter_by(hospital_id=item.id):
+            ppe = PPE.query.filter_by(id=want.ppe_id).first()
+            wa.append({
+                "ppe": ppe.sku,
+                "count": want.count
+            })
         items.append({
             "id": item.id,
             "name": item.name,
-            "credit": item.credit
+            "address": item.address+", "+item.street+", "+item.city+", "+item.state,
+            "credit": item.credit,
+            "haves": ha,
+            "wants": wa
         })
     return render_template('admin_hospitals.html', items=items)
 
@@ -500,7 +555,7 @@ def update_admin_exchanges():
         q = db.session.query(Exchanges)
         q = q.filter(Exchanges.id==(int(data["exchange_id"])))
         record = q.first()
-        record.status = EXCHANGE_ADMIN_NOT_VERIFIED
+        record.status = EXCHANGE_UNVERIFIED
         record.updated_timestamp = datetime.now()
         db.session.commit()
     return jsonify(target="index")

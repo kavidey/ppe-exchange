@@ -20,6 +20,7 @@ Count
                     <input class="form-control count" type="text" pattern="[0-9]" placeholder="{{ item.count }}" />
                 {% endif %}
                 <br>
+                <span style="font-size: small;margin-bottom: 0.5rem;">Total in System: {{ item.other }}</span><br>
                 <button onclick="submit()" class="btn btn-primary" {% if item.grey_out %} disabled {% endif %}>Update Count</button>                    
 		</p>
               </div>
