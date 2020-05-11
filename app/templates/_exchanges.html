@@ -42,7 +42,7 @@
 {% macro exchange_status_and_actions(ex, e) %}
     {% set status = "Unknown" %}
     {% set actions %}
-        <i style="display: inline-block; width: 100%; text-align: center;">None</i>
+        <!-- <i style="display: inline-block; width: 100%; text-align: center;">None</i> -->
     {% endset %}
 
     {% if e.h1 == hospital.hospital_id and ex.verify1 %}
@@ -131,10 +131,10 @@
                 {% endcall %}
 
                 <td>
-                    {% if e.h1 == hospital_id %}
-                        Giving {{ e.count }} of {{ e.ppe }} to {{ e.h2_name }}
-                    {% elif e.h2 == hospital_id %}
-                        Receiving {{ e.count }} of {{ e.ppe }} from {{ e.h1_name }}
+                    {% if e.h1 == hospital.hospital_id %}
+                        Giving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_desc }}">{{ e.ppe }}</a> to {{ e.h2_name }}
+                    {% elif e.h2 == hospital.hospital_id %}
+                        Receiving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_desc }}">{{ e.ppe }}</a> from {{ e.h1_name }}
                     {% else %}
                         {{ e.h1_name }} giving {{ e.count }} of {{ e.ppe }} to {{ e.h2_name }}
                     {% endif %}
@@ -199,6 +199,10 @@
 </div>
 
 <script>
+    function fatalError() {
+        alert("There was an error. Your changes may not have been saved.\n\nReloading...");
+        window.document.location.reload();
+    }
     var data = {};
     $("#delete-check").hide()
 
@@ -218,9 +222,7 @@
             success: function (result) {
                 location.reload();
             },
-            error: function (result) {
-                alert("There was an error please reload and try again");
-            }
+            error: fatalError
         });
     }
 
@@ -236,14 +238,17 @@
             success: function (result) {
                 location.reload();
             },
-            error: function (result) {
-                alert("There was an error please reload and try again");
-            }
+            error: fatalError
         });
     }
 
     function hideDeleteCheck() {
         $("#delete-check").hide();
     }
+
+    // Setup all the bootstrap tooltips
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
 </script>
 {% endblock %}
