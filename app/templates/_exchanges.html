@@ -26,50 +26,78 @@
 {% endif %}
 {% endmacro %}
 
-{% macro swap(ex, e) %}
-    <td>
-    {% if e.h1 == hospital.hospital_id %}
-        {% if ex.verify1 %}
-            {% if not e.is_verified %}
+{% macro whole_exchange_actions(loop, ex, status = "") %}
+<!-- Apparently jinja2 is 1-indexed. I hate it. -->
+{% if loop.index == 1 %}
+
+    <td rowspan="{{ ex.exchanges|length }}">
+        {{ status }}
+    </td>
+    <td rowspan="{{ ex.exchanges|length }}">
+        {{ caller() }}
+    </td>
+{% endif %}
+{% endmacro %}
+
+{% macro exchange_status_and_actions(ex, e) %}
+    {% set status = "Unknown" %}
+    {% set actions %}
+        <i style="display: inline-block; width: 100%; text-align: center;">None</i>
+    {% endset %}
+
+    {% if e.h1 == hospital.hospital_id and ex.verify1 %}
+        {% if not e.is_verified %}
+            {% set status %}
                 Waiting for {{ e.h2_name }} to verify
-            {% elif not e.is_shipped %}
-                Waiting for you to ship:
+            {% endset %}
+        {% elif not e.is_shipped %}
+            {% set status = "You need to ship" %}
+            {% set actions %}
                 <button
                     style="margin-left: 0.25em;"
                     onclick="updateExchange('{{ ex.exchange_sid }}', 'shipped', '{{ e.id }}', 1, '{{ e.h1 }}') "
                     class="btn btn-success btn-sm"
                 >Mark as Shipped</button>
-            {% elif not e.is_received %}
+            {% endset %}
+        {% elif not e.is_received %}
+            {% set status %}
                 Waiting for {{ e.h2_name }} to receive
-            {% else %}
-                Exchange complete
-            {% endif %}
+            {% endset %}
+        {% else %}
+            {% set status = "Complete" %}
         {% endif %}
-    {% elif e.h2 == hospital.hospital_id %}
-        {% if ex.verify2 %}
-            {% if not e.is_verified %}
+    {% elif e.h2 == hospital.hospital_id and ex.verify2 %}
+        {% if not e.is_verified %}
+            {% set status %}
                 Waiting for {{ e.h1_name }} to verify
-            {% elif not e.is_shipped %}
+            {% endset %}
+        {% elif not e.is_shipped %}
+            {% set status %}
                 Waiting for {{ e.h1_name }} to ship
-            {% elif not e.is_received %}
-                Waiting for Receipt:
+            {% endset %}
+        {% elif not e.is_received %}
+            {% set status = "Waiting for Receipt" %}
+            {% set actions %}
                 <button style="margin-left: 0.25em;"
                 onclick="updateExchange('{{ ex.exchange_sid }}', 'received', '{{ e.id }}', 2, '{{ e.h2 }}') "
                 type="button" class="btn btn-success btn-sm">Mark as Received</button>
-            {% else %}
-                Exchange complete
-            {% endif %}
+            {% endset %}
+        {% else %}
+            {% set status = "Complete" %}
         {% endif %}
     {% else %}
+        {% set status|trim %}
             {% if e.is_verified == False %}
-            Waiting for verification
+                Waiting for verification
             {% elif not e.is_shipped %}
-            Waiting for shipment
+                Waiting for shipment
             {% elif not e.is_received %}
-            Waiting for receipt
+                Waiting for receipt
             {% endif %}
+        {% endset %}
     {% endif %}
-    </td>
+    <td>{{ status }}</td>
+    <td>{{ actions }}</td>
 {% endmacro %}
 
 {% block exchanges %}
@@ -83,6 +111,7 @@
                 <th scope="col">Updated</th>
                 <th scope="col">Exchange</th>
                 <th scope="col">Status</th>
+                <th scope="col">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -102,24 +131,28 @@
                 {% endcall %}
 
                 <td>
-                    {{ e.h1_name }} giving {{ e.h2_name }} {{ e.count }} instances of {{ e.ppe }}
+                    {% if e.h1 == hospital_id %}
+                        Giving {{ e.count }} of {{ e.ppe }} to {{ e.h2_name }}
+                    {% elif e.h2 == hospital_id %}
+                        Receiving {{ e.count }} of {{ e.ppe }} from {{ e.h1_name }}
+                    {% else %}
+                        {{ e.h1_name }} giving {{ e.count }} of {{ e.ppe }} to {{ e.h2_name }}
+                    {% endif %}
                 </td>
 
                 {% if ex.exchange_status == 4 %}
-                    {% call whole_exchange_td(loop, ex) %}
-                        Exchange canceled by system administrator
+                    {% call whole_exchange_actions(loop, ex, status="Canceled by system administrator") %}
                     {% endcall %}
                 {% elif ex.exchange_status == 3 %}
-                    {% call whole_exchange_td(loop, ex) %}
-                        Exchange canceled by hospital
+                    {% call whole_exchange_actions(loop, ex, status="Cancelled by hospital") %}
                     {% endcall %}
                 {% elif ex.exchange_status == 1 %}
-                    {% call whole_exchange_td(loop, ex) %}
-                        Exchange complete
+                    {% call whole_exchange_actions(loop, ex, status="Complete") %}
                     {% endcall %}
                 {% else %}
+                    <!-- Verify1 and Verify2 will only be true if we are the relevant hospital AND need to verify.-->
                     {% if not ex.verify1 %}
-                        {% call whole_exchange_td(loop, ex) %}
+                        {% call whole_exchange_actions(loop, ex, status="You need to verify") %}
                             <button
                                 onclick="updateExchange('{{ ex.exchange_sid }}', 'verify', 0, 1, '{{ hospital.hospital_id }}') "
                                 type="button" class="btn btn-success btn-sm">Verify</button>
@@ -128,7 +161,7 @@
                                 type="button" class="btn btn-danger btn-sm">Cancel</button>
                         {% endcall %}
                     {% elif not ex.verify2 %}
-                        {% call whole_exchange_td(loop, ex) %}
+                        {% call whole_exchange_actions(loop, ex, status="You need to verify") %}
                             <button
                                 onclick="updateExchange('{{ ex.exchange_sid }}', 'verify', 0, 2, '{{ hospital.hospital_id }}') "
                                 type="button" class="btn btn-success btn-sm">Verify</button>
@@ -137,7 +170,7 @@
                                 type="button" class="btn btn-danger btn-sm">Cancel</button>
                         {% endcall %}
                     {% else %}
-                        {{ swap(ex, e) }}
+                        {{ exchange_status_and_actions(ex, e) }}
                     {% endif %}
                 {% endif %}
             </tr>
