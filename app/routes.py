@@ -90,7 +90,16 @@ def index():
                     )
                 )
             elif user.hospital.id == inner.hospital2:
-                actionable = ((inner.status == EXCHANGE_NOT_ACCEPTED or ex.status == EXCHANGE_UNVERIFIED) and not inner.is_h2_verified) or ((inner.is_h1_shipped or inner.status == EXCHANGE_ACCEPTED_SHIPPED) and not inner.is_h2_received)
+                actionable = (
+                    (
+                        (inner.status == EXCHANGE_NOT_ACCEPTED or ex.status == EXCHANGE_UNVERIFIED) and
+                        not inner.is_h2_verified
+                    ) or
+                    (
+                        (inner.is_h1_shipped or inner.status == EXCHANGE_ACCEPTED_SHIPPED) and
+                        not inner.is_h2_received
+                    )
+                )
 
             # These are the only states which permit `inner` to be actionable
             if inner.status in [EXCHANGE_NOT_ACCEPTED, EXCHANGE_ACCEPTED_NOT_SHIPPED, EXCHANGE_ACCEPTED_SHIPPED] and not inner.is_h2_received:
