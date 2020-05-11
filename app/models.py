@@ -39,7 +39,6 @@ class Hospital(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     contact = db.Column(db.String(140), default="")
     address = db.Column(db.String(140), default="")
-    name = db.Column(db.String(140))
     street = db.Column(db.String(128), default="")
     city = db.Column(db.String(128), default="")
     state = db.Column(db.String(128), default="")

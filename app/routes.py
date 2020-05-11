@@ -390,7 +390,7 @@ def admin_users():
             "verification_pending": user.verification_key is not None,
             "is_admin": user.is_admin
         }
-        if user_hospital is not None:
+        if user_hospital is not None and not user.is_admin:
             item["hospital"] = user_hospital.name
             item["contact"] = user.hospital_contact
             item["address"] = user.hospital_street + ", " + user.hospital_city + ", " + user.hospital_state + " " + user.hospital_zipcode
@@ -452,29 +452,30 @@ def admin_hospitals():
     hospitals = Hospital.query.all()
     items = []
     for item in hospitals:
-        print("id",item.id,"credit",item.credit)
-        ha = []
-        for have in Has.query.filter_by(hospital_id=item.id):
-            ppe = PPE.query.filter_by(id=have.ppe_id).first()
-            ha.append({
-                "ppe": ppe.sku,
-                "count": have.count,
+        if item.name != "admin":
+            print("id",item.id,"credit",item.credit)
+            ha = []
+            for have in Has.query.filter_by(hospital_id=item.id):
+                ppe = PPE.query.filter_by(id=have.ppe_id).first()
+                ha.append({
+                    "ppe": ppe.sku,
+                    "count": have.count,
+                })
+            wa = []
+            for want in Wants.query.filter_by(hospital_id=item.id):
+                ppe = PPE.query.filter_by(id=want.ppe_id).first()
+                wa.append({
+                    "ppe": ppe.sku,
+                    "count": want.count
+                })
+            items.append({
+                "id": item.id,
+                "name": item.name,
+                "address": item.address+", "+item.street+", "+item.city+", "+item.state,
+                "credit": item.credit,
+                "haves": ha,
+                "wants": wa
             })
-        wa = []
-        for want in Wants.query.filter_by(hospital_id=item.id):
-            ppe = PPE.query.filter_by(id=want.ppe_id).first()
-            wa.append({
-                "ppe": ppe.sku,
-                "count": want.count
-            })
-        items.append({
-            "id": item.id,
-            "name": item.name,
-            "address": item.address+", "+item.street+", "+item.city+", "+item.state,
-            "credit": item.credit,
-            "haves": ha,
-            "wants": wa
-        })
     return render_template('admin_hospitals.html', items=items)
 
 @app.route('/update_admin_hospital', methods=['GET', 'POST'])
