@@ -59,30 +59,6 @@ def index():
         order_by(Exchanges.id.asc()).\
         all()
 
-        #     i = {
-        #     "id": inner.id,
-        #     "h1_name": Hospital.query.filter_by(id = inner.hospital1).first().name,
-        #     "h1": inner.hospital1,
-        #     "h2_name": Hospital.query.filter_by(id = inner.hospital2).first().name,
-        #     "h2": inner.hospital2,
-        #     "ppe": inner.ppe_ref.sku,
-        #     "ppe_desc": inner.ppe_ref.desc,
-        #     "count": inner.count,
-        #     "status": inner.status,
-        #     "is_verified": inner.is_h1_verified and inner.is_h2_verified,
-        #     "is_shipped": inner.is_h1_shipped,
-        #     "is_received": inner.is_h2_received
-        # }
-        # items.append({
-        #     "exchange_sid": ex.id,
-        #     "exchange_status": ex.status,
-        #     "exchange_created": ex.created_timestamp,
-        #     "exchange_updated": ex.updated_timestamp,
-        #     "exchanges": its,
-        #     "verify1": verify1,
-        #     "verify2": verify2
-        # })
-
     items = { 'actionable': [], 'pending': [], 'complete': [] }
     for ex in exchanges:
         status = 'pending'
@@ -207,105 +183,11 @@ def verify():
 
 @app.route('/wants', methods=['GET', 'POST'])
 def wants():
-    if not current_user.is_authenticated:
-        return redirect(url_for('login',next='/wants'))
-    
-    user = User.query.filter_by(username=current_user.username).first()
-    if not user.is_verified:
-        return render_template("404.html")
-    
-    user = User.query.filter_by(username=current_user.username).first()
-    user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
-    
-    skus = PPE.query.all()
-    items = []
-    for item in skus:
-        count = 0
-        count_other = 0
-        total_count_has = 0
-        try:
-            count = Wants.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
-        except:
-            count = 0
-        # adding get count of Has
-        try:
-            count_other = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
-        except:
-            count_other = 0
-
-        # get total number of Has for this ppe
-        try:
-            has = Has.query.filter_by(ppe_id=item.id)
-            for ha in has:
-                total_count_has += ha.count
-        except:
-            total_count_has = 0
-
-        items.append({
-            "sku": item.sku,
-            "desc": item.desc,
-            "img": item.img.decode(),
-            "count": count,
-            "grey_out": count_other > 0,
-            "other": total_count_has
-        })
-
-    hospital = {
-        "hospital_name": user_hospital.name
-    }
-    return render_template('item_base.html', title='Wants', hospital=hospital, state="Wants", items=items)
+    return redirect(url_for('index'))
 
 @app.route('/has', methods=['GET', 'POST'])
 def has():
-    if not current_user.is_authenticated:
-        return redirect(url_for('login',next='/has'))
-    
-    user = User.query.filter_by(username=current_user.username).first()
-    if not user.is_verified:
-        return render_template("404.html")
-    
-    user = User.query.filter_by(username=current_user.username).first()
-    user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
-    
-    skus = PPE.query.all()
-    items = []
-    for item in skus:
-        count = 0
-        count_other = 0
-        total_count_wants = 0
-        try:
-            count = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
-        except:
-            count = 0
-       # adding get count of Has
-        try:
-            count_other = Wants.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
-        except:
-            count_other = 0
-
-        # get total number of Wants for this ppe
-        try:
-            wants = Wants.query.filter_by(ppe_id=item.id)
-            for want in wants:
-                total_count_wants += want.count
-        except:
-            total_count_wants = 0
-
-        print(str(count) +", "+str(count_other))
-        
-        items.append({
-            "sku": item.sku,
-            "desc": item.desc,
-            "img": item.img.decode(),
-            "count": count,
-            "grey_out": count_other > 0,
-            "other": total_count_wants
-        })
-
-    hospital = {
-        "hospital_name": user_hospital.name
-    }
-    return render_template('item_base.html', title='Have', hospital=hospital, state="Has", items=items)
+    return redirect(url_for('index'))
 
 
 @app.route('/update-ppe/<name>', methods=['POST'])
@@ -706,66 +588,7 @@ def update_admin_exchanges():
 
 @app.route('/exchanges', methods=['GET', 'POST'])
 def exchanges():
-#    if not current_user.is_authenticated:
-#        return redirect(url_for('login',next='/exchanges'))
-
-    user_id = User.query.filter_by(username=current_user.username).first().id
-    hospital_id = User.query.filter_by(id=user_id).first().hospital_id
-    
-    exchanges = Exchanges.query.all()
-    items = []
-    for ex in exchanges:
-        exchange = Exchange.query.filter_by(exchange_id=ex.id)
-        good = False
-        its = []
-
-        if ex.status==EXCHANGE_ADMIN_NOT_VERIFIED:
-            good = False
-
-            # good = is this hospital involved in this individual exchange?
-            for x in exchange:
-                if x.hospital1==hospital_id:
-                    good = True
-                elif x.hospital2==hospital_id:
-                    good = True
-        if good:
-            inners = Exchange.query.filter_by(exchange_id=ex.id)
-            verify1 = True
-            verify2 = True
-            # verify(1/2) = has this hospital verified this whole exchange?
-            for inner in inners:
-                if hospital_id == inner.hospital1 and not inner.is_h1_verified:
-                    verify1 = False
-                elif hospital_id == inner.hospital2 and not inner.is_h2_verified:
-                    verify2 = False
-                i = {
-                    "id": inner.id,
-                    "h1_name": Hospital.query.filter_by(id = inner.hospital1).first().name,
-                    "h1": inner.hospital1,
-                    "h2_name": Hospital.query.filter_by(id = inner.hospital2).first().name,
-                    "h2": inner.hospital2,
-                    "ppe": PPE.query.filter_by(id = inner.ppe).first().sku,
-                    "count": inner.count,
-                    "status": inner.status,
-                    "is_verified": inner.is_h1_verified and inner.is_h2_verified,
-                    "is_shipped": inner.is_h1_shipped,
-                    "is_received": inner.is_h2_received
-                }
-                its.append(i)
-            items.append({
-                "exchange_sid": ex.id,
-                "exchange_status": ex.status,
-                "exchange_created": ex.created_timestamp,
-                "exchange_updated": ex.updated_timestamp,
-                "exchanges": its,
-                "verify1": verify1,
-                "verify2": verify2
-            })
-    hospital = {
-        "hospital_name": Hospital.query.filter_by(id=hospital_id).first().name,
-        "hospital_id":hospital_id
-    }
-    return render_template('exchanges.html', title='Exchanges', hospital=hospital, state="Exchange", exchanges=items)
+    return redirect(url_for('index'))
 
 # exchanges logic
 # loop through exchanges
