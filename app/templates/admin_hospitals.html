@@ -49,6 +49,7 @@
                 <th scope="col">ID</th>
                 <th scope="col">Name</th>
                 <th scope="col">Address</th>
+                <th scope="col">PPE</th>
                 <th scope="col">Credits</th>
                 <th scope="col">Changes</th>
                 </tr>
@@ -59,6 +60,14 @@
                     <th scope="row">{{ item.id }}</th>
                     <td>{{ item.name }}</td>
                     <td>{{ item.address }}</td>
+                    <td>
+                        {% for h in item.haves %}
+                            Has {{ h.count}} units of {{ h.ppe }}<br>
+                        {% endfor %}
+                        {% for w in item.wants %}
+                            Wants {{ w.count}} units of {{ w.ppe }}<br>
+                        {% endfor %}
+                    </td>
                     <td>{{ item.credit }} </td>
                     <td>
                             <button class="btn btn-danger" id="remove" onclick="checkRemoveHospital('{{ item.id }}', '{{ item.name }}')">Remove</button>

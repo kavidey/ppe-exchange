@@ -93,13 +93,13 @@ class Has(db.Model):
         return '<Has id={} hospital_id={} ppe_id={} count={}>'.format(self.id, self.hospital_id, self.ppe_id, self.count)
 
 # EXCHANGE_STATUS
-# algorithm has proposed an exchange, but exchange has not been verified by admin yet: NOT_VERIFIED = 0
+# algorithm has proposed an exchange, but exchange has not been verified by admin yet: NOT_VERIFIED = 0 --> state #1
 EXCHANGE_ADMIN_NOT_VERIFIED = 0
-# normal completion: EXCHANGE_COMPLETE = 1
+# normal completion: EXCHANGE_COMPLETE = 1 --> state #4
 EXCHANGE_COMPLETE = 1
 EXCHANGE_COMPLETE_TEXT = "Complete"
 
-# administrator had to complete: EXCHANGE_COMPLETE_ADMIN = 2
+# administrator had to complete: EXCHANGE_COMPLETE_ADMIN = 2 --> not supported
 EXCHANGE_COMPLETE_ADMIN = 2
 EXCHANGE_COMPLETE_ADMIN_TEXT = "Administrator completed"
 
@@ -111,11 +111,11 @@ EXCHANGE_COMPLETE_HOSPITAL_CANCELED_TEXT = "Hospital canceled"
 EXCHANGE_COMPLETE_ADMIN_CANCELED = 4    
 EXCHANGE_COMPLETE_ADMIN_CANCELED_TEXT = "Administrator canceled"
 
-# exchange has been created, but not verified by parties: EXCHANGE_UNVERIFIED = 11
+# exchange has been created, but not verified by parties: EXCHANGE_UNVERIFIED = 11 --> state #2
 EXCHANGE_UNVERIFIED = 11
-EXCHANGE_UNVERIFIED_TEXT = "Exchange created, but not yet verified"
+EXCHANGE_UNVERIFIED_TEXT = "Exchange created, but not yet verified by hospitals"
 
-# exchange created, verified by parties, but not complete: EXCHANGE_IN_PROGRESS = 12
+# exchange created, verified by parties, but not complete: EXCHANGE_IN_PROGRESS = 12 --> state #3
 EXCHANGE_IN_PROGRESS = 12
 EXCHANGE_IN_PROGRESS_TEXT = "Exchange in progress"
 
