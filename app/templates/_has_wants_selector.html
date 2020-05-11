@@ -93,11 +93,12 @@
                     <tbody>
                         {% for ppe in ppe_types %}
                         {% if ppe.wants|length > 0 or ppe.has|length > 0 %}
+                            <!-- This becomes <tr hidden/>, which is the HTML hidden attribute. -->
                             {% set hidden = "hidden" %}
                         {% else %}
                             {% set hidden = "" %}
                         {% endif %}
-                        <tr data-searchable="{{ ppe.desc }} {{ ppe.sku }}" {{ hidden }} id="add-ppe-type-result-{{ ppe.id }}">
+                        <tr data-searchable="{{ ppe.desc|upper }} {{ ppe.sku|upper }}" {{ hidden }} id="add-ppe-type-result-{{ ppe.id }}">
                         {% call ppe_row(ppe) %}
                             {% if ppe.wants|length > 0 %}
                                 <i>You already want this PPE!</i>
