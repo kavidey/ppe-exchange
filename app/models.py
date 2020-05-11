@@ -49,7 +49,8 @@ class Hospital(db.Model):
     wants = db.relationship('Wants', backref='hospital')
     has = db.relationship('Has', backref='hospital')
     users = db.relationship('User', backref='hospital')
-    exchange = db.relationship('Exchange', backref='hospital')
+    exchange1s = db.relationship('Exchange', backref='hospital1_ref', foreign_keys='Exchange.hospital1')
+    exchange2s = db.relationship('Exchange', backref='hospital2_ref', foreign_keys='Exchange.hospital2')
 
     def __repr__(self):
         return '<Hospital {}>'.format(self.name)
@@ -153,7 +154,7 @@ class Exchange(db.Model):
     exchange_id = db.Column(db.Integer, db.ForeignKey('exchanges.id'))
     hospital1 = db.Column(db.Integer, db.ForeignKey('hospital.id'))
     hospital1_accept = db.Column(db.Integer, default=0)
-    hospital2 = db.Column(db.Integer)
+    hospital2 = db.Column(db.Integer, db.ForeignKey('hospital.id'))
     hospital2_accept = db.Column(db.Integer, default=0)
     ppe = db.Column(db.Integer, db.ForeignKey('ppe.id'))
     count = db.Column(db.Integer)
@@ -162,7 +163,7 @@ class Exchange(db.Model):
     is_h2_verified = db.Column(db.Boolean(), default=False)
     is_h1_shipped = db.Column(db.Boolean(), default=False)
     is_h2_received = db.Column(db.Boolean(), default=False)
-    
+
     def __repr__(self):
         return '<Exchange id={} exchanges_id={} h1={} (accept: {}, verify: {}, shipped: {}) h2={} (accept: {}, verify: {}, received: {}) ppe_id={} count={} status={}>'.\
             format(self.id, self.exchange_id, self.hospital1, self.hospital1_accept, self.is_h1_verified, self.is_h1_shipped, self.hospital2, self.hospital2_accept, self.is_h2_verified, self.is_h2_received, self.ppe, self.count, self.status)

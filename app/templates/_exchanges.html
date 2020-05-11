@@ -18,22 +18,20 @@
 -->
 
 {% macro whole_exchange_td(loop, ex) %}
-<!-- Apparently jinja2 is 1-indexed. I hate it. -->
-{% if loop.index == 1 %}
-    <td rowspan="{{ ex.exchanges|length }}">
+{% if loop.first %}
+    <td rowspan="{{ ex.exchange|length }}">
         {{ caller() }}
     </td>
 {% endif %}
 {% endmacro %}
 
 {% macro whole_exchange_actions(loop, ex, status = "") %}
-<!-- Apparently jinja2 is 1-indexed. I hate it. -->
-{% if loop.index == 1 %}
+{% if loop.first %}
 
-    <td rowspan="{{ ex.exchanges|length }}">
+    <td rowspan="{{ ex.exchange|length }}">
         {{ status }}
     </td>
-    <td rowspan="{{ ex.exchanges|length }}">
+    <td rowspan="{{ ex.exchange|length }}">
         {{ caller() }}
     </td>
 {% endif %}
@@ -45,64 +43,79 @@
         <!-- <i style="display: inline-block; width: 100%; text-align: center;">None</i> -->
     {% endset %}
 
-    {% if e.h1 == hospital.hospital_id and ex.verify1 %}
-        {% if not e.is_verified %}
-            {% set status %}
-                Waiting for {{ e.h2_name }} to verify
-            {% endset %}
-        {% elif not e.is_shipped %}
+    {% if not (e.is_h1_verified and e.is_h2_verified) %}
+        {% if not e.is_h1_verified and (user.hospital.id == e.hospital1 or e.is_h2_verified)%}
+            {% if user.hospital.id == e.hospital1 %}
+                {% set status = "You need to verify" %}
+                {% set actions %}
+                    <button
+                        onclick="updateExchange('{{ ex.id }}', 'verify', '{{ e.id }}', -1, '{{ user.hospital.id }}') "
+                        type="button" class="btn btn-success btn-sm">Verify</button>
+                    <button
+                        onclick="deleteCheck('{{ ex.id }}', 'cancel', '{{ e.id }}', -1, '{{ user.hospital.id }}') "
+                        type="button" class="btn btn-danger btn-sm">Cancel</button>
+                {% endset %}
+            {% else %}
+                {% set status %}
+                    Waiting for {{ e.hospital1_ref.name }} to verify
+                {% endset %}
+            {% endif %}
+        {% endif %}
+        {% if not e.is_h2_verified and (user.hospital.id == e.hospital2 or e.is_h1_verified) %}
+            {% if user.hospital.id == e.hospital2 %}
+                {% set status = "You need to verify" %}
+                {% set actions %}
+                    <button
+                        onclick="updateExchange('{{ ex.id }}', 'verify', '{{ e.id }}', -1, '{{ user.hospital.id }}') "
+                        type="button" class="btn btn-success btn-sm">Verify</button>
+                    <button
+                        onclick="deleteCheck('{{ ex.id }}', 'cancel', '{{ e.id }}', -1, '{{ user.hospital.id }}') "
+                        type="button" class="btn btn-danger btn-sm">Cancel</button>
+                {% endset %}
+            {% else %}
+                {% set status %}
+                    Waiting for {{ e.hospital2_ref.name }} to verify
+                {% endset %}
+            {% endif %}
+        {% endif %}
+    {% elif not e.is_h1_shipped %}
+        {% if user.hospital.id == e.hospital1 %}
             {% set status = "You need to ship" %}
             {% set actions %}
                 <button
                     style="margin-left: 0.25em;"
-                    onclick="updateExchange('{{ ex.exchange_sid }}', 'shipped', '{{ e.id }}', 1, '{{ e.h1 }}') "
+                    onclick="updateExchange('{{ ex.id }}', 'shipped', '{{ e.id }}', 1, '{{ user.hospital.id }}') "
                     class="btn btn-success btn-sm"
                 >Mark as Shipped</button>
             {% endset %}
-        {% elif not e.is_received %}
-            {% set status %}
-                Waiting for {{ e.h2_name }} to receive
-            {% endset %}
         {% else %}
-            {% set status = "Complete" %}
+            {% set status %}
+                Waiting for {{ e.hospital1_ref.name }} to ship
+            {% endset %}
         {% endif %}
-    {% elif e.h2 == hospital.hospital_id and ex.verify2 %}
-        {% if not e.is_verified %}
-            {% set status %}
-                Waiting for {{ e.h1_name }} to verify
-            {% endset %}
-        {% elif not e.is_shipped %}
-            {% set status %}
-                Waiting for {{ e.h1_name }} to ship
-            {% endset %}
-        {% elif not e.is_received %}
+    {% elif not e.is_h2_received %}
+        {% if user.hospital.id == e.hospital2 %}
             {% set status = "Waiting for Receipt" %}
             {% set actions %}
                 <button style="margin-left: 0.25em;"
-                onclick="updateExchange('{{ ex.exchange_sid }}', 'received', '{{ e.id }}', 2, '{{ e.h2 }}') "
+                onclick="updateExchange('{{ ex.id }}', 'received', '{{ e.id }}', 2, '{{ user.hospital.id }}') "
                 type="button" class="btn btn-success btn-sm">Mark as Received</button>
             {% endset %}
         {% else %}
-            {% set status = "Complete" %}
+            {% set status %}
+                Waiting for {{ e.hospital2_ref.name }} to receive
+            {% endset %}
         {% endif %}
     {% else %}
-        {% set status|trim %}
-            {% if e.is_verified == False %}
-                Waiting for verification
-            {% elif not e.is_shipped %}
-                Waiting for shipment
-            {% elif not e.is_received %}
-                Waiting for receipt
-            {% endif %}
-        {% endset %}
+        {% set status = "Complete" %}
     {% endif %}
+
     <td>{{ status }}</td>
     <td>{{ actions }}</td>
 {% endmacro %}
 
-{% block exchanges %}
-<div class="well current-exchanges">
-    <h2>Your Exchanges</h2>
+{% macro exchanges_listing(title, help, exchanges) %}
+    <h3>{{ title }}</h3>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -115,58 +128,63 @@
             </tr>
         </thead>
         <tbody>
+            {% if exchanges|length == 0 %}
+                <tr>
+                    <td colspan="6" style="text-align: center; font-style: italic; font-size: 1.25em;">
+                        You don't have any {{ title|lower }} exchanges right now!
+                        <br/>
+                        {{ help }}
+                    </td>
+                </tr>
+            {% endif %}
             {% for ex in exchanges %}
-            {% for e in ex.exchanges %}
+            {% for e in ex.exchange %}
             <tr>
                 {% call whole_exchange_td(loop, ex) %}
-                    {{ ex.exchange_sid }}
+                    {{ ex.id }}
                 {% endcall %}
 
                 {% call whole_exchange_td(loop, ex) %}
-                    {{ ex.exchange_created.replace(microsecond=0) }}
+                    {{ ex.created_timestamp.replace(microsecond=0) }}
                 {% endcall %}
 
                 {% call whole_exchange_td(loop, ex) %}
-                        {{ ex.exchange_updated.replace(microsecond=0) }}
+                    {{ ex.updated_timestamp.replace(microsecond=0) }}
                 {% endcall %}
 
                 <td>
-                    {% if e.h1 == hospital.hospital_id %}
-                        Giving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_desc }}">{{ e.ppe }}</a> to {{ e.h2_name }}
-                    {% elif e.h2 == hospital.hospital_id %}
-                        Receiving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_desc }}">{{ e.ppe }}</a> from {{ e.h1_name }}
+                    {% if e.hospital1 == user.hospital.id %}
+                        Giving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_ref.desc }}">{{ e.ppe_ref.sku }}</a> to {{ e.hospital2_ref.name }}
+                    {% elif e.hospital2 == user.hospital.id %}
+                        Receiving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_ref.desc }}">{{ e.ppe_ref.sku }}</a> from {{ e.hospital2_ref.name }}
                     {% else %}
-                        {{ e.h1_name }} giving {{ e.count }} of {{ e.ppe }} to {{ e.h2_name }}
+                        {{ e.hospital1_ref.name }} giving {{ e.count }} of {{ e.ppe_ref.sku }} to {{ e.hospital2_ref.name }}
                     {% endif %}
                 </td>
 
-                {% if ex.exchange_status == 4 %}
+                {% if ex.status == 4 %}
                     {% call whole_exchange_actions(loop, ex, status="Canceled by system administrator") %}
                     {% endcall %}
-                {% elif ex.exchange_status == 3 %}
+                {% elif ex.status == 3 %}
                     {% call whole_exchange_actions(loop, ex, status="Cancelled by hospital") %}
                     {% endcall %}
-                {% elif ex.exchange_status == 1 %}
+                {% elif ex.status == 2 %}
+                    {% call whole_exchange_actions(loop, ex, status="Completed by system administrator") %}
+                    {% endcall %}
+                {% elif ex.status == 1 %}
                     {% call whole_exchange_actions(loop, ex, status="Complete") %}
                     {% endcall %}
                 {% else %}
-                    <!-- Verify1 and Verify2 will only be true if we are the relevant hospital AND need to verify.-->
-                    {% if not ex.verify1 %}
+                    <!-- Currently disabled: approve the whole Exchanges at once. Delete the "False and" to re-enable.
+                        It was disabled because the logic to determine if any swap has advanced past the verification
+                        step is complicated and clicking "Verify" a few times isn't that hard. -->
+                    {% if False and ((user.hospital.id == e.hospital1 and not e.is_h1_verified) or (user.hospital.id == e.hospital2 and not e.is_h2_verified)) %}
                         {% call whole_exchange_actions(loop, ex, status="You need to verify") %}
                             <button
-                                onclick="updateExchange('{{ ex.exchange_sid }}', 'verify', 0, 1, '{{ hospital.hospital_id }}') "
+                                onclick="updateExchange('{{ ex.id }}', 'verify', -1, -1, '{{ user.hospital.id }}') "
                                 type="button" class="btn btn-success btn-sm">Verify</button>
                             <button
-                                onclick="deleteCheck('{{ ex.exchange_sid }}', 'cancel', 0, 1, '{{ hospital.hospital_id }}') "
-                                type="button" class="btn btn-danger btn-sm">Cancel</button>
-                        {% endcall %}
-                    {% elif not ex.verify2 %}
-                        {% call whole_exchange_actions(loop, ex, status="You need to verify") %}
-                            <button
-                                onclick="updateExchange('{{ ex.exchange_sid }}', 'verify', 0, 2, '{{ hospital.hospital_id }}') "
-                                type="button" class="btn btn-success btn-sm">Verify</button>
-                            <button
-                                onclick="deleteCheck('{{ ex.exchange_sid }}', 'cancel', 0, 2, '{{ hospital.hospital_id }}') "
+                                onclick="deleteCheck('{{ ex.id }}', 'cancel', -1, -1, '{{ user.hospital.id }}') "
                                 type="button" class="btn btn-danger btn-sm">Cancel</button>
                         {% endcall %}
                     {% else %}
@@ -178,6 +196,14 @@
             {% endfor %}
         </tbody>
     </table>
+{% endmacro %}
+
+{% block exchanges %}
+<div class="well current-exchanges">
+    <h2>Your Exchanges</h2>
+    {{ exchanges_listing('Actionable', 'Exchanges will appear here when they require your input to move forward.', exchanges['actionable']) }}
+    {{ exchanges_listing('Pending', "Exchanges will appear here when they're in progress, but don't require anything from you right now.", exchanges['pending']) }}
+    {{ exchanges_listing('Completed', "Exchanges will appear here when they're completely finished.", exchanges['complete']) }}
 </div>
 
 
@@ -207,7 +233,7 @@
     $("#delete-check").hide()
 
     function deleteCheck(exchange_id, task, e_id, number, hospital_id) {
-        data = { exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id: hospital_id, user_id: '{{ user_id }}' };
+        data = { exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id: hospital_id, user_id: '{{ user.id }}' };
         $("#delete-check").show();
         $("#remove-item-name").text(exchange_id);
     }
@@ -228,7 +254,7 @@
 
 
     function updateExchange(exchange_id, task, e_id, number, hospital_id) {
-        data = { exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id: hospital_id , user_id: '{{ user_id }}'};
+        data = { exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id: hospital_id , user_id: '{{ user.id }}'};
         $.ajax({
             url: "/update_exchange",
             type: "POST",
@@ -251,4 +277,14 @@
         $('[data-toggle="tooltip"]').tooltip()
     })
 </script>
+
+<style>
+    h2 {
+        text-align: center;
+    }
+
+    .current-exchanges > h3 {
+        margin-top: 2em;
+    }
+</style>
 {% endblock %}
