@@ -2,35 +2,119 @@ from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug import secure_filename
-from app import app, db
+from app import app, db, crypto, email
 from app.forms import LoginForm, RegistrationForm, VerifyForm, AdminAuthorizationForm
 from app.models import User, PPE, Hospital, Wants, Has, Exchanges, Exchange, EXCHANGE_COMPLETE, EXCHANGE_COMPLETE_TEXT, EXCHANGE_COMPLETE_ADMIN, EXCHANGE_COMPLETE_ADMIN_TEXT, EXCHANGE_COMPLETE_HOSPITAL_CANCELED, EXCHANGE_COMPLETE_HOSPITAL_CANCELED_TEXT, EXCHANGE_COMPLETE_ADMIN_CANCELED, EXCHANGE_COMPLETE_ADMIN_CANCELED_TEXT, EXCHANGE_UNVERIFIED, EXCHANGE_UNVERIFIED_TEXT, EXCHANGE_IN_PROGRESS, EXCHANGE_IN_PROGRESS_TEXT, EXCHANGE_NOT_ACCEPTED, EXCHANGE_ACCEPTED_NOT_SHIPPED, EXCHANGE_ACCEPTED_SHIPPED, EXCHANGE_ACCEPTED_RECEIVED, EXCHANGE_HOSPITAL_CANCELED, EXCHANGE_ADMIN_CANCELED, EXCHANGE_ADMIN_NOT_VERIFIED
 from app import crypto
 from app import email
 from datetime import datetime
-from sqlalchemy import desc
+from sqlalchemy import desc, and_, or_
+from sqlalchemy.orm import contains_eager
 
 import json
 import os
 import math
+import inspect
+
+
+import logging
+logging.basicConfig()
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 @app.route('/')
 @app.route('/index')
 @login_required
 def index():
-    user = User.query.filter_by(username=current_user.username).first()
+    user = User.query.\
+        filter_by(username=current_user.username).\
+        join(Hospital).\
+        options(contains_eager(User.hospital)).\
+        first()
+
     if user.is_admin:
         return render_template('admin_index.html', title='Home')
     elif not user.is_verified:
         return render_template("404.html")
-    else:
-        user = User.query.filter_by(username=current_user.username).first()
-        user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
-        
-        hospital = {
-            "hospital_name": user_hospital.name
-        }
-        return render_template('index.html', title='Home', hospital=hospital)
+
+    ppe_types = PPE.query.\
+        outerjoin(Wants, and_(Wants.hospital_id == user.hospital.id, Wants.ppe_id == PPE.id)).\
+        outerjoin(Has, and_(Has.hospital_id == user.hospital.id, Has.ppe_id == PPE.id)).\
+        options(contains_eager(PPE.wants)).\
+        options(contains_eager(PPE.has)).\
+        all()
+
+        # filter(or_(Exchange.hospital1==user.hospital.id, Exchange.hospital2 == user.hospital.id)).\
+    exchange_subquery = Exchange.query.\
+        join(PPE).\
+        join(Hospital, or_(Exchange.hospital1 == Hospital.id, Exchange.hospital2 == Hospital.id)).\
+        options(contains_eager(Exchange.ppe_ref)).\
+        options(contains_eager(Exchange.hospital1_ref)).\
+        options(contains_eager(Exchange.hospital2_ref)).\
+        subquery()
+    
+    exchanges = Exchanges.query.\
+        filter(Exchanges.status.in_([EXCHANGE_COMPLETE, EXCHANGE_COMPLETE_ADMIN, EXCHANGE_IN_PROGRESS, EXCHANGE_UNVERIFIED])).\
+        join(exchange_subquery, Exchange.exchange_id == Exchanges.id).\
+        options(contains_eager(Exchanges.exchange)).\
+        order_by(Exchanges.id.asc()).\
+        all()
+
+    items = { 'actionable': [], 'pending': [], 'complete': [] }
+    for ex in exchanges:
+        status = 'pending'
+        found_incompleteness = False
+
+        # FIXME: I can't figure out how to do an SQL filter on Exchanges that determines if any
+        #        Exchange references this hospital. So, right now, we return *all* the exchanges
+        #        in the entire system and loop through them here. THIS IS BAD.
+        found_user = False
+
+        for inner in ex.exchange:
+            if user.hospital.id != inner.hospital1 and user.hospital.id != inner.hospital2:
+                continue
+            found_user = True
+            actionable = False
+
+            if user.hospital.id == inner.hospital1:
+                actionable = (
+                    (
+                        (inner.status == EXCHANGE_NOT_ACCEPTED or ex.status == EXCHANGE_UNVERIFIED) and
+                        not inner.is_h1_verified
+                    ) or
+                    (
+                        (
+                            (inner.is_h1_verified and inner.is_h2_verified) or
+                            inner.status == EXCHANGE_ACCEPTED_NOT_SHIPPED
+                        ) and
+                        not inner.is_h1_shipped
+                    )
+                )
+            elif user.hospital.id == inner.hospital2:
+                actionable = (
+                    (
+                        (inner.status == EXCHANGE_NOT_ACCEPTED or ex.status == EXCHANGE_UNVERIFIED) and
+                        not inner.is_h2_verified
+                    ) or
+                    (
+                        (inner.is_h1_shipped or inner.status == EXCHANGE_ACCEPTED_SHIPPED) and
+                        not inner.is_h2_received
+                    )
+                )
+
+            # These are the only states which permit `inner` to be actionable
+            if inner.status in [EXCHANGE_NOT_ACCEPTED, EXCHANGE_ACCEPTED_NOT_SHIPPED, EXCHANGE_ACCEPTED_SHIPPED] and not inner.is_h2_received:
+                found_incompleteness = True
+                if actionable:
+                    status = 'actionable'
+
+        # If it's any of these four statuses, we overrule everything else to say it's complete
+        if not found_incompleteness or ex.status in [EXCHANGE_COMPLETE, EXCHANGE_COMPLETE_ADMIN, EXCHANGE_COMPLETE_HOSPITAL_CANCELED, EXCHANGE_COMPLETE_ADMIN_CANCELED]:
+            status = 'complete'
+
+        if found_user:
+            items[status].append(ex)
+
+    return render_template('index.html', title='Home', user=user, ppe_types=ppe_types, exchanges=items)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -108,105 +192,54 @@ def verify():
 
 @app.route('/wants', methods=['GET', 'POST'])
 def wants():
-    if not current_user.is_authenticated:
-        return redirect(url_for('login',next='/wants'))
-    
-    user = User.query.filter_by(username=current_user.username).first()
-    if not user.is_verified:
-        return render_template("404.html")
-    
-    user = User.query.filter_by(username=current_user.username).first()
-    user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
-    
-    skus = PPE.query.all()
-    items = []
-    for item in skus:
-        count = 0
-        count_other = 0
-        total_count_has = 0
-        try:
-            count = Wants.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
-        except:
-            count = 0
-        # adding get count of Has
-        try:
-            count_other = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
-        except:
-            count_other = 0
-
-        # get total number of Has for this ppe
-        try:
-            has = Has.query.filter_by(ppe_id=item.id)
-            for ha in has:
-                total_count_has += ha.count
-        except:
-            total_count_has = 0
-
-        items.append({
-            "sku": item.sku,
-            "desc": item.desc,
-            "img": item.img.decode(),
-            "count": count,
-            "grey_out": count_other > 0,
-            "other": total_count_has
-        })
-
-    hospital = {
-        "hospital_name": user_hospital.name
-    }
-    return render_template('item_base.html', title='Wants', hospital=hospital, state="Wants", items=items)
+    return redirect(url_for('index'))
 
 @app.route('/has', methods=['GET', 'POST'])
 def has():
+    return redirect(url_for('index'))
+
+
+@app.route('/update-ppe/<name>', methods=['POST'])
+def update_ppe(name):
     if not current_user.is_authenticated:
-        return redirect(url_for('login',next='/has'))
+        return redirect(url_for("login", next="/"))
     
-    user = User.query.filter_by(username=current_user.username).first()
-    if not user.is_verified:
-        return render_template("404.html")
+    Model = None
+
+    if name == "wants":
+        Model = Wants
+    elif name == "has":
+        Model = Has
+    else:
+        return 404
+
+    OtherModel = Has if Model is Wants else Wants
     
     user = User.query.filter_by(username=current_user.username).first()
     user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
-    
-    skus = PPE.query.all()
-    items = []
-    for item in skus:
-        count = 0
-        count_other = 0
-        total_count_wants = 0
-        try:
-            count = Has.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
-        except:
-            count = 0
-       # adding get count of Has
-        try:
-            count_other = Wants.query.filter_by(hospital_id=user_hospital.id, ppe_id=item.id).first().count
-        except:
-            count_other = 0
 
-        # get total number of Wants for this ppe
-        try:
-            wants = Wants.query.filter_by(ppe_id=item.id)
-            for want in wants:
-                total_count_wants += want.count
-        except:
-            total_count_wants = 0
+    for key, quantity in request.form.items():
+        # key format is in ppe-XX for quantities, so make sure we're looking at the right thing.
+        if not key[:4] == "ppe-": continue
+        ppe_id = key[4:]
+        quantity = int(quantity)
 
-        print(str(count) +", "+str(count_other))
-        
-        items.append({
-            "sku": item.sku,
-            "desc": item.desc,
-            "img": item.img.decode(),
-            "count": count,
-            "grey_out": count_other > 0,
-            "other": total_count_wants
-        })
+        current = Model.query.filter_by(hospital_id=user_hospital.id, ppe_id=ppe_id).first()
 
-    hospital = {
-        "hospital_name": user_hospital.name
-    }
-    return render_template('item_base.html', title='Have', hospital=hospital, state="Has", items=items)
+        if quantity != 0:
+            other = OtherModel.query.filter_by(hospital_id=user_hospital.id, ppe_id=ppe_id).first()
+            if other is not None: db.session.delete(other)
+
+        if current is None:
+            if quantity == 0: continue # don't need to add a nonexistant entry
+            db.session.add(Model(hospital_id=user_hospital.id, ppe_id=ppe_id, count=quantity))
+        elif quantity == 0:
+            db.session.delete(current)
+        else:
+            current.count = quantity
+
+    db.session.commit()
+    return redirect(url_for('index'))
 
 @app.route('/update_want_need', methods=['GET', 'POST'])
 def update_want_need():
@@ -562,66 +595,7 @@ def update_admin_exchanges():
 
 @app.route('/exchanges', methods=['GET', 'POST'])
 def exchanges():
-#    if not current_user.is_authenticated:
-#        return redirect(url_for('login',next='/exchanges'))
-
-    user_id = User.query.filter_by(username=current_user.username).first().id
-    hospital_id = User.query.filter_by(id=user_id).first().hospital_id
-    
-    exchanges = Exchanges.query.all()
-    items = []
-    for ex in exchanges:
-        exchange = Exchange.query.filter_by(exchange_id=ex.id)
-        good = False
-        its = []
-
-        if ex.status==EXCHANGE_ADMIN_NOT_VERIFIED:
-            good = False
-
-            # good = is this hospital involved in this individual exchange?
-            for x in exchange:
-                if x.hospital1==hospital_id:
-                    good = True
-                elif x.hospital2==hospital_id:
-                    good = True
-        if good:
-            inners = Exchange.query.filter_by(exchange_id=ex.id)
-            verify1 = True
-            verify2 = True
-            # verify(1/2) = has this hospital verified this whole exchange?
-            for inner in inners:
-                if hospital_id == inner.hospital1 and not inner.is_h1_verified:
-                    verify1 = False
-                elif hospital_id == inner.hospital2 and not inner.is_h2_verified:
-                    verify2 = False
-                i = {
-                    "id": inner.id,
-                    "h1_name": Hospital.query.filter_by(id = inner.hospital1).first().name,
-                    "h1": inner.hospital1,
-                    "h2_name": Hospital.query.filter_by(id = inner.hospital2).first().name,
-                    "h2": inner.hospital2,
-                    "ppe": PPE.query.filter_by(id = inner.ppe).first().sku,
-                    "count": inner.count,
-                    "status": inner.status,
-                    "is_verified": inner.is_h1_verified and inner.is_h2_verified,
-                    "is_shipped": inner.is_h1_shipped,
-                    "is_received": inner.is_h2_received
-                }
-                its.append(i)
-            items.append({
-                "exchange_sid": ex.id,
-                "exchange_status": ex.status,
-                "exchange_created": ex.created_timestamp,
-                "exchange_updated": ex.updated_timestamp,
-                "exchanges": its,
-                "verify1": verify1,
-                "verify2": verify2
-            })
-    hospital = {
-        "hospital_name": Hospital.query.filter_by(id=hospital_id).first().name,
-        "hospital_id":hospital_id
-    }
-    return render_template('exchanges.html', title='Exchanges', hospital=hospital, state="Exchange", exchanges=items)
+    return redirect(url_for('index'))
 
 # exchanges logic
 # loop through exchanges
@@ -644,8 +618,14 @@ def update_exchange():
     if not current_user.is_authenticated:
         return jsonify(target="login?next="+data['state'])
     if data["task"] == "verify":
-        exchanges = db.session.query(Exchange)
-        exchanges = exchanges.filter_by(exchange_id=int(data["exchange_id"]))
+        exchanges = db.session.query(Exchange).filter_by(exchange_id=int(data["exchange_id"]))
+        eid = -1
+        try:
+            eid = int(data['e_id'])
+        except:
+            pass
+        if eid >= 0:
+            exchanges = exchanges.filter_by(id=eid) 
         for ex in exchanges:
             if ex.hospital1 == int(data["hospital_id"]):
                 ex.updated_timestamp=datetime.now()
@@ -674,13 +654,21 @@ def update_exchange():
             data["exchange_id"])
 
     elif data["task"] == "cancel":
-        exchanges = db.session.query(Exchange)
-        exchanges = exchanges.filter_by(exchange_id=int(data["exchange_id"]))
+        exchanges = db.session.query(Exchange).filter_by(exchange_id=int(data["exchange_id"]))
+        eid = -1
+        try:
+            eid = int(data['e_id'])
+        except:
+            pass
+        if eid >= 0:
+            exchanges = exchanges.filter_by(id=eid) 
+
         for ex in exchanges:
             ex.updated_timestamp=datetime.now()
             ex.status=EXCHANGE_HOSPITAL_CANCELED
 
         e = db.session.query(Exchanges).filter_by(id=int(data["exchange_id"])).first()
+
         e.updated_timestamp=datetime.now()
         e.status=EXCHANGE_COMPLETE_HOSPITAL_CANCELED
         db.session.commit()
@@ -705,7 +693,7 @@ def update_exchange():
         exchanges = exchanges.filter_by(exchange_id=int(data["exchange_id"]))
         done = True
         for ex in exchanges:
-            if not ex.status == EXCHANGE_ACCEPTED_RECEIVED:
+            if ex.status != EXCHANGE_ACCEPTED_RECEIVED:
                 done = False
         print(done)
         print(data["exchange_id"])

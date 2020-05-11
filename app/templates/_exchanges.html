@@ -1,0 +1,290 @@
+
+<!--
+# exchanges logic
+# loop through exchanges
+#   find ones that have this user's hospital id somewhere in the linked exchange -> grab whole "exchanges"
+#   exchange id -> exchanges.id
+#   when created -> exchanges.creation_timestamp
+#   when updated -> exchanges.updated_timestamp
+#   loop through exchanges
+#     print out exchange
+#     print out status
+#     depending on status, show optional button
+
+# The final table looks like:
+# Exchange ID   when created    when updated    exchange part 1     status part 1: optional button (verify/shipped/received)
+#                                               exchange part 2     status part 2: optional button
+#                                               ...                 ...
+-->
+
+{% macro whole_exchange_td(loop, ex) %}
+{% if loop.first %}
+    <td rowspan="{{ ex.exchange|length }}">
+        {{ caller() }}
+    </td>
+{% endif %}
+{% endmacro %}
+
+{% macro whole_exchange_actions(loop, ex, status = "") %}
+{% if loop.first %}
+
+    <td rowspan="{{ ex.exchange|length }}">
+        {{ status }}
+    </td>
+    <td rowspan="{{ ex.exchange|length }}">
+        {{ caller() }}
+    </td>
+{% endif %}
+{% endmacro %}
+
+{% macro exchange_status_and_actions(ex, e) %}
+    {% set status = "Unknown" %}
+    {% set actions %}
+        <!-- <i style="display: inline-block; width: 100%; text-align: center;">None</i> -->
+    {% endset %}
+
+    {% if not (e.is_h1_verified and e.is_h2_verified) %}
+        {% if not e.is_h1_verified and (user.hospital.id == e.hospital1 or e.is_h2_verified)%}
+            {% if user.hospital.id == e.hospital1 %}
+                {% set status = "You need to verify" %}
+                {% set actions %}
+                    <button
+                        onclick="updateExchange('{{ ex.id }}', 'verify', '{{ e.id }}', -1, '{{ user.hospital.id }}') "
+                        type="button" class="btn btn-success btn-sm">Verify</button>
+                    <button
+                        onclick="deleteCheck('{{ ex.id }}', 'cancel', '{{ e.id }}', -1, '{{ user.hospital.id }}') "
+                        type="button" class="btn btn-danger btn-sm">Cancel</button>
+                {% endset %}
+            {% else %}
+                {% set status %}
+                    Waiting for {{ e.hospital1_ref.name }} to verify
+                {% endset %}
+            {% endif %}
+        {% endif %}
+        {% if not e.is_h2_verified and (user.hospital.id == e.hospital2 or e.is_h1_verified) %}
+            {% if user.hospital.id == e.hospital2 %}
+                {% set status = "You need to verify" %}
+                {% set actions %}
+                    <button
+                        onclick="updateExchange('{{ ex.id }}', 'verify', '{{ e.id }}', -1, '{{ user.hospital.id }}') "
+                        type="button" class="btn btn-success btn-sm">Verify</button>
+                    <button
+                        onclick="deleteCheck('{{ ex.id }}', 'cancel', '{{ e.id }}', -1, '{{ user.hospital.id }}') "
+                        type="button" class="btn btn-danger btn-sm">Cancel</button>
+                {% endset %}
+            {% else %}
+                {% set status %}
+                    Waiting for {{ e.hospital2_ref.name }} to verify
+                {% endset %}
+            {% endif %}
+        {% endif %}
+    {% elif not e.is_h1_shipped %}
+        {% if user.hospital.id == e.hospital1 %}
+            {% set status = "You need to ship" %}
+            {% set actions %}
+                <button
+                    style="margin-left: 0.25em;"
+                    onclick="updateExchange('{{ ex.id }}', 'shipped', '{{ e.id }}', 1, '{{ user.hospital.id }}') "
+                    class="btn btn-success btn-sm"
+                >Mark as Shipped</button>
+            {% endset %}
+        {% else %}
+            {% set status %}
+                Waiting for {{ e.hospital1_ref.name }} to ship
+            {% endset %}
+        {% endif %}
+    {% elif not e.is_h2_received %}
+        {% if user.hospital.id == e.hospital2 %}
+            {% set status = "Waiting for Receipt" %}
+            {% set actions %}
+                <button style="margin-left: 0.25em;"
+                onclick="updateExchange('{{ ex.id }}', 'received', '{{ e.id }}', 2, '{{ user.hospital.id }}') "
+                type="button" class="btn btn-success btn-sm">Mark as Received</button>
+            {% endset %}
+        {% else %}
+            {% set status %}
+                Waiting for {{ e.hospital2_ref.name }} to receive
+            {% endset %}
+        {% endif %}
+    {% else %}
+        {% set status = "Complete" %}
+    {% endif %}
+
+    <td>{{ status }}</td>
+    <td>{{ actions }}</td>
+{% endmacro %}
+
+{% macro exchanges_listing(title, help, exchanges) %}
+    <h3>{{ title }}</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Created</th>
+                <th scope="col">Updated</th>
+                <th scope="col">Exchange</th>
+                <th scope="col">Status</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if exchanges|length == 0 %}
+                <tr>
+                    <td colspan="6" style="text-align: center; font-style: italic; font-size: 1.25em;">
+                        You don't have any {{ title|lower }} exchanges right now!
+                        <br/>
+                        {{ help }}
+                    </td>
+                </tr>
+            {% endif %}
+            {% for ex in exchanges %}
+            {% for e in ex.exchange %}
+            <tr>
+                {% call whole_exchange_td(loop, ex) %}
+                    {{ ex.id }}
+                {% endcall %}
+
+                {% call whole_exchange_td(loop, ex) %}
+                    {{ ex.created_timestamp.replace(microsecond=0) }}
+                {% endcall %}
+
+                {% call whole_exchange_td(loop, ex) %}
+                    {{ ex.updated_timestamp.replace(microsecond=0) }}
+                {% endcall %}
+
+                <td>
+                    {% if e.hospital1 == user.hospital.id %}
+                        Giving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_ref.desc }}">{{ e.ppe_ref.sku }}</a> to {{ e.hospital2_ref.name }}
+                    {% elif e.hospital2 == user.hospital.id %}
+                        Receiving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_ref.desc }}">{{ e.ppe_ref.sku }}</a> from {{ e.hospital2_ref.name }}
+                    {% else %}
+                        {{ e.hospital1_ref.name }} giving {{ e.count }} of {{ e.ppe_ref.sku }} to {{ e.hospital2_ref.name }}
+                    {% endif %}
+                </td>
+
+                {% if ex.status == 4 %}
+                    {% call whole_exchange_actions(loop, ex, status="Canceled by system administrator") %}
+                    {% endcall %}
+                {% elif ex.status == 3 %}
+                    {% call whole_exchange_actions(loop, ex, status="Cancelled by hospital") %}
+                    {% endcall %}
+                {% elif ex.status == 2 %}
+                    {% call whole_exchange_actions(loop, ex, status="Completed by system administrator") %}
+                    {% endcall %}
+                {% elif ex.status == 1 %}
+                    {% call whole_exchange_actions(loop, ex, status="Complete") %}
+                    {% endcall %}
+                {% else %}
+                    <!-- Currently disabled: approve the whole Exchanges at once. Delete the "False and" to re-enable.
+                        It was disabled because the logic to determine if any swap has advanced past the verification
+                        step is complicated and clicking "Verify" a few times isn't that hard. -->
+                    {% if False and ((user.hospital.id == e.hospital1 and not e.is_h1_verified) or (user.hospital.id == e.hospital2 and not e.is_h2_verified)) %}
+                        {% call whole_exchange_actions(loop, ex, status="You need to verify") %}
+                            <button
+                                onclick="updateExchange('{{ ex.id }}', 'verify', -1, -1, '{{ user.hospital.id }}') "
+                                type="button" class="btn btn-success btn-sm">Verify</button>
+                            <button
+                                onclick="deleteCheck('{{ ex.id }}', 'cancel', -1, -1, '{{ user.hospital.id }}') "
+                                type="button" class="btn btn-danger btn-sm">Cancel</button>
+                        {% endcall %}
+                    {% else %}
+                        {{ exchange_status_and_actions(ex, e) }}
+                    {% endif %}
+                {% endif %}
+            </tr>
+            {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+{% endmacro %}
+
+{% block exchanges %}
+<div class="well current-exchanges">
+    <h2>Your Exchanges</h2>
+    {{ exchanges_listing('Actionable', 'Exchanges will appear here when they require your input to move forward.', exchanges['actionable']) }}
+    {{ exchanges_listing('Pending', "Exchanges will appear here when they're in progress, but don't require anything from you right now.", exchanges['pending']) }}
+    {{ exchanges_listing('Completed', "Exchanges will appear here when they're completely finished.", exchanges['complete']) }}
+</div>
+
+
+<div id="delete-check" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Cancel Confirmation</h2>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel Exchange <span id="remove-item-name"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button id="yes" class="btn btn-danger" onclick="updateExchange2()">Yes</button>
+                <button id="no" class="btn btn-primary" onclick="hideDeleteCheck()">No</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function fatalError() {
+        alert("There was an error. Your changes may not have been saved.\n\nReloading...");
+        window.document.location.reload();
+    }
+    var data = {};
+    $("#delete-check").hide()
+
+    function deleteCheck(exchange_id, task, e_id, number, hospital_id) {
+        data = { exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id: hospital_id, user_id: '{{ user.id }}' };
+        $("#delete-check").show();
+        $("#remove-item-name").text(exchange_id);
+    }
+
+    function updateExchange2() {
+        $.ajax({
+            url: "/update_exchange",
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            dataType: 'json',
+            success: function (result) {
+                location.reload();
+            },
+            error: fatalError
+        });
+    }
+
+
+    function updateExchange(exchange_id, task, e_id, number, hospital_id) {
+        data = { exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id: hospital_id , user_id: '{{ user.id }}'};
+        $.ajax({
+            url: "/update_exchange",
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            dataType: 'json',
+            success: function (result) {
+                location.reload();
+            },
+            error: fatalError
+        });
+    }
+
+    function hideDeleteCheck() {
+        $("#delete-check").hide();
+    }
+
+    // Setup all the bootstrap tooltips
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
+
+<style>
+    h2 {
+        text-align: center;
+    }
+
+    .current-exchanges > h3 {
+        margin-top: 2em;
+    }
+</style>
+{% endblock %}
