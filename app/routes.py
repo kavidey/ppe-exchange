@@ -218,8 +218,6 @@ def update_ppe(name):
     user = User.query.filter_by(username=current_user.username).first()
     user_hospital = Hospital.query.filter_by(id=user.hospital_id).first()
 
-    q = db.session.query(Model)
-
     for key, quantity in request.form.items():
         # key format is in ppe-XX for quantities, so make sure we're looking at the right thing.
         if not key[:4] == "ppe-": continue
