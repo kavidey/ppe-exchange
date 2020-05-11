@@ -131,38 +131,10 @@
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
-<div class="content">
-    <h1>Hi, {{ current_user.username }} from {{ hospital.hospital_name }} !</h1>
-    <div class="well current-exchanges">
-        <h2>Your Exchanges</h2>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>With</th>
-                    <th>Status</th>
-                    <th>Receiving</th>
-                    <th>Giving</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>12</td>
-                    <td><a href="#">Virginia Mason</a></td>
-                    <td><span class="badge badge-secondary">Pending</span></td>
-                    <td>2000 N95, 300 P50</td>
-                    <td>5000 Surgical Masks</td>
-                    <td><a href="#">Details</a></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
 
-    {{ ppe_selector('wants', 'Want') }}
+{{ ppe_selector('wants', 'Want') }}
 
-    {{ ppe_selector('has', 'Have') }}
-</div>
+{{ ppe_selector('has', 'Have') }}
 <style>
     .ppe-container:not(.edit) input:not(.no-edit),
     .ppe-container:not(.edit) .only-edit,

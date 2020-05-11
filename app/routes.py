@@ -51,8 +51,9 @@ def index():
     
     exchanges = Exchanges.query.\
         filter(Exchanges.status.in_([EXCHANGE_ADMIN_NOT_VERIFIED, EXCHANGE_IN_PROGRESS, EXCHANGE_UNVERIFIED])).\
-        join(exchange_subquery).\
+        join(exchange_subquery, Exchange.exchange_id == Exchanges.id).\
         options(contains_eager(Exchanges.exchange)).\
+        order_by(Exchanges.id.asc()).\
         all()
 
     items = []
@@ -95,7 +96,7 @@ def index():
         "hospital_id": hospital_id
     }
     
-    return render_template('index.html', title='Home', hospital=hospital, ppe_types=ppe_types, exchanges=items)
+    return render_template('index.html', title='Home', hospital=hospital, ppe_types=ppe_types, exchanges=items, user_id=user_id)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -296,7 +297,7 @@ def update_ppe(name):
     q = db.session.query(Model)
 
     for key, quantity in request.form.items():
-        # key format is in ppe-ID for quantities, so make sure we're looking at the right thing.
+        # key format is in ppe-XX for quantities, so make sure we're looking at the right thing.
         if not key[:4] == "ppe-": continue
         ppe_id = key[4:]
         quantity = int(quantity)
@@ -308,7 +309,7 @@ def update_ppe(name):
             if other is not None: db.session.delete(other)
 
         if current is None:
-            if quantity == 0: continue # don't need to delete a nonexistant entry
+            if quantity == 0: continue # don't need to add a nonexistant entry
             db.session.add(Model(hospital_id=user_hospital.id, ppe_id=ppe_id, count=quantity))
         elif quantity == 0:
             db.session.delete(current)

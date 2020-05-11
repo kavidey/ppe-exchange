@@ -143,7 +143,7 @@
     $("#delete-check").hide()
 
     function deleteCheck(exchange_id, task, e_id, number, hospital_id) {
-        data = { exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id: hospital_id };
+        data = { exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id: hospital_id, user_id: '{{ user_id }}' };
         $("#delete-check").show();
         $("#remove-item-name").text(exchange_id);
     }
@@ -166,7 +166,7 @@
 
 
     function updateExchange(exchange_id, task, e_id, number, hospital_id) {
-        data = { exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id: hospital_id };
+        data = { exchange_id: exchange_id, task: task, e_id: e_id, number: number, hospital_id: hospital_id , user_id: '{{ user_id }}'};
         $.ajax({
             url: "/update_exchange",
             type: "POST",
