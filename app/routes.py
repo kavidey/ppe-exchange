@@ -25,6 +25,8 @@ logging.basicConfig()
 @app.route('/index')
 @login_required
 def index():
+
+    # user --> row for this user
     user = User.query.\
         filter_by(username=current_user.username).\
         join(Hospital).\
@@ -36,6 +38,7 @@ def index():
     elif not user.is_verified:
         return render_template("404.html")
 
+    # ppe_types --> 
     ppe_types = PPE.query.\
         outerjoin(Wants, and_(Wants.hospital_id == user.hospital.id, Wants.ppe_id == PPE.id)).\
         outerjoin(Has, and_(Has.hospital_id == user.hospital.id, Has.ppe_id == PPE.id)).\
@@ -53,7 +56,7 @@ def index():
         subquery()
     
     exchanges = Exchanges.query.\
-        filter(Exchanges.status.in_([EXCHANGE_COMPLETE, EXCHANGE_COMPLETE_ADMIN, EXCHANGE_IN_PROGRESS, EXCHANGE_UNVERIFIED])).\
+        filter(Exchanges.status.in_([EXCHANGE_COMPLETE_HOSPITAL_CANCELED, EXCHANGE_COMPLETE_ADMIN_CANCELED, EXCHANGE_COMPLETE, EXCHANGE_COMPLETE_ADMIN, EXCHANGE_IN_PROGRESS, EXCHANGE_UNVERIFIED])).\
         join(exchange_subquery, Exchange.exchange_id == Exchanges.id).\
         options(contains_eager(Exchanges.exchange)).\
         order_by(Exchanges.id.asc()).\
@@ -113,7 +116,7 @@ def index():
 
         if found_user:
             items[status].append(ex)
-
+ 
     return render_template('index.html', title='Home', user=user, ppe_types=ppe_types, exchanges=items)
 
 
@@ -592,6 +595,25 @@ def update_admin_exchanges():
         record.status = EXCHANGE_UNVERIFIED
         record.updated_timestamp = datetime.now()
         db.session.commit()
+
+        # # send email to all unique hospitals in newly verified exchange
+        h_list = []
+        # get all hospitals in newly verified exchange
+        xs = Exchange.query.filter_by(exchange_id=(int(data["exchange_id"])))
+        for x in xs:
+            h_list.append(x.hospital1)
+            h_list.append(x.hospital2)
+        
+        # only keep the unique ones
+        unique_h_list = list(set(h_list))
+        
+        for h in unique_h_list:
+                email.send_hospital_exchange_creation(
+                    User.query.filter_by(hospital_id=h).first().username,
+                    "localhost:5000",
+                    User.query.filter_by(hospital_id=h).first().email,
+                    data["exchange_id"])
+        
     return jsonify(target="index")
 
 @app.route('/exchanges', methods=['GET', 'POST'])

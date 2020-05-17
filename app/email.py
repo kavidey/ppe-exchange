@@ -15,13 +15,13 @@ def send_user_verification(username, auth_key, hostname, email):
 
 def send_hospital_exchange_creation(username, hostname, email, exchange_id):
     url = "http://"+hostname + "/exchanges"
-    text1="A new PPE exchange " + exchange_id + "was created for your hospital."
+    text1="A new PPE exchange (exchange #" + exchange_id + ") was created for your hospital."
     text2="and verify your hospital's participation in the exchange."
     msg = Message(subject="PPE Exchange - New Exchange Created",
                     sender=app.config.get("MAIL_USERNAME"),
                     recipients=[email],
                     body=" ",
-                    html=render_template("email_exchange_creation.html", username=username, link=url, linking=True, id=exchange_id))
+                    html=render_template("email_exchange.html", username=username, link=url, linking=True, id=exchange_id, text1=text1, text2=text2))
     mail.send(msg)
 
 def send_hospital_exchange_own_verified(username, hostname, email, exchange_id):
@@ -32,7 +32,7 @@ def send_hospital_exchange_own_verified(username, hostname, email, exchange_id):
                     sender=app.config.get("MAIL_USERNAME"),
                     recipients=[email],
                     body=" ",
-                    html=render_template("email_exchange_creation.html", username=username, link=url, linking=True, id=exchange_id))
+                    html=render_template("email_exchange.html", username=username, link=url, linking=True, id=exchange_id))
     mail.send(msg)
 
 def send_hospital_exchange_partner_verified(username, hostname, email, exchange_id):
