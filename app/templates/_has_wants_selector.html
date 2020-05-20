@@ -1,6 +1,7 @@
 {% macro ppe_row(ppe) %}
 <td><img class="itmimg" src="{{ ppe.img.decode() }}" alt="{{ ppe.desc }} mask image" width="150" /></td>
 <td>{{ ppe.sku }}</td>
+<td>{{ ppe.manu }}</td>
 <td>{{ ppe.desc }}</td>
 <td>
     {{ caller() }}
@@ -38,6 +39,7 @@
                 <tr>
                     <th>Image</th>
                     <th>SKU</th>
+                    <th>Manufacturer</th>
                     <th>Description</th>
                     <th>Quantity Wanted</th>
                 </tr>
@@ -86,6 +88,7 @@
                         <tr>
                             <th>Image</th>
                             <th>SKU</th>
+                            <th>Manufacturer</th>
                             <th>Description</th>
                             <th>Actions</th>
                         </tr>
@@ -98,7 +101,7 @@
                         {% else %}
                             {% set hidden = "" %}
                         {% endif %}
-                        <tr data-searchable="{{ ppe.desc|upper }} {{ ppe.sku|upper }}" {{ hidden }} id="add-ppe-type-result-{{ ppe.id }}">
+                        <tr data-searchable="{{ ppe.desc|upper }} {{ppe.manu|upper }} {{ ppe.sku|upper }}" {{ hidden }} id="add-ppe-type-result-{{ ppe.id }}">
                         {% call ppe_row(ppe) %}
                             {% if ppe.wants|length > 0 %}
                                 <i>You already want this PPE!</i>

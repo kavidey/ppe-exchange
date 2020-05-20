@@ -62,10 +62,10 @@
                     <td>{{ item.address }}</td>
                     <td>
                         {% for h in item.haves %}
-                            Has {{ h.count}} units of {{ h.ppe }}<br>
+                            Has {{ h.count}} units of <a href="#" data-toggle="tooltip" title="{{ h.tooltip }}">{{ h.ppe }}</a><br>
                         {% endfor %}
                         {% for w in item.wants %}
-                            Wants {{ w.count}} units of {{ w.ppe }}<br>
+                            Wants {{ w.count}} units of <a href="#" data-toggle="tooltip" title="{{ w.tooltip }}">{{ w.ppe }}</a><br>
                         {% endfor %}
                     </td>
                     <td>{{ item.credit }} </td>
@@ -186,5 +186,10 @@
         function hideEditPage() {
             $('#edit').hide();
         }
+
+        // Setup all the bootstrap tooltips
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
     </script>
 {% endblock %}

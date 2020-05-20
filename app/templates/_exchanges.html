@@ -38,13 +38,17 @@
 {% endmacro %}
 
 {% macro exchange_status_and_actions(ex, e) %}
-    {% set status = "Unknown" %}
+    <!-- set status = "Unknown" -->
+    {% set status = "" %}
     {% set actions %}
         <!-- <i style="display: inline-block; width: 100%; text-align: center;">None</i> -->
     {% endset %}
 
+    <!-- if both hospitals haven't verified -->
     {% if not (e.is_h1_verified and e.is_h2_verified) %}
+        <!-- if you are hospital 1 and you haven't verified, OR hospital hasn't verified and hospital 2 has verified -->
         {% if not e.is_h1_verified and (user.hospital.id == e.hospital1 or e.is_h2_verified)%}
+            <!-- if you are hospital 1 -->
             {% if user.hospital.id == e.hospital1 %}
                 {% set status = "You need to verify" %}
                 {% set actions %}
@@ -110,8 +114,10 @@
         {% set status = "Complete" %}
     {% endif %}
 
-    <td>{{ status }}</td>
-    <td>{{ actions }}</td>
+    {% if not status == "" %}
+        <td>{{ status }}</td>
+        <td>{{ actions }}</td>
+    {% endif %}
 {% endmacro %}
 
 {% macro exchanges_listing(title, help, exchanges) %}
@@ -154,11 +160,11 @@
 
                 <td>
                     {% if e.hospital1 == user.hospital.id %}
-                        Giving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_ref.desc }}">{{ e.ppe_ref.sku }}</a> to {{ e.hospital2_ref.name }}
+                        Giving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_ref.manu }} {{ e.ppe_ref.desc }}">{{ e.ppe_ref.sku }}</a> to {{ e.hospital2_ref.name }}
                     {% elif e.hospital2 == user.hospital.id %}
-                        Receiving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_ref.desc }}">{{ e.ppe_ref.sku }}</a> from {{ e.hospital2_ref.name }}
+                        Receiving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_ref.manu }} {{ e.ppe_ref.desc }}">{{ e.ppe_ref.sku }}</a> from {{ e.hospital1_ref.name }}
                     {% else %}
-                        {{ e.hospital1_ref.name }} giving {{ e.count }} of {{ e.ppe_ref.sku }} to {{ e.hospital2_ref.name }}
+                        {{ e.hospital1_ref.name }} giving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_ref.manu }} {{ e.ppe_ref.desc }}">{{ e.ppe_ref.sku }}</a> to {{ e.hospital2_ref.name }}
                     {% endif %}
                 </td>
 
@@ -174,11 +180,12 @@
                 {% elif ex.status == 1 %}
                     {% call whole_exchange_actions(loop, ex, status="Complete") %}
                     {% endcall %}
-                {% else %}
+               {% else %}
                     <!-- Currently disabled: approve the whole Exchanges at once. Delete the "False and" to re-enable.
                         It was disabled because the logic to determine if any swap has advanced past the verification
                         step is complicated and clicking "Verify" a few times isn't that hard. -->
-                    {% if False and ((user.hospital.id == e.hospital1 and not e.is_h1_verified) or (user.hospital.id == e.hospital2 and not e.is_h2_verified)) %}
+                    <!-- ORIGINAL LINE WITH False and still in it: if False and ((user.hospital.id == e.hospital1 and not e.is_h1_verified) or (user.hospital.id == e.hospital2 and not e.is_h2_verified)) -->
+                    {% if ((user.hospital.id == e.hospital1 and not e.is_h1_verified) or (user.hospital.id == e.hospital2 and not e.is_h2_verified)) %}
                         {% call whole_exchange_actions(loop, ex, status="You need to verify") %}
                             <button
                                 onclick="updateExchange('{{ ex.id }}', 'verify', -1, -1, '{{ user.hospital.id }}') "
@@ -186,6 +193,9 @@
                             <button
                                 onclick="deleteCheck('{{ ex.id }}', 'cancel', -1, -1, '{{ user.hospital.id }}') "
                                 type="button" class="btn btn-danger btn-sm">Cancel</button>
+                        {% endcall %}
+                    {% elif ex.status == 11 %}
+                        {% call whole_exchange_actions(loop, ex, status="Waiting on verification") %}
                         {% endcall %}
                     {% else %}
                         {{ exchange_status_and_actions(ex, e) }}

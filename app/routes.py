@@ -62,6 +62,8 @@ def index():
         order_by(Exchanges.id.asc()).\
         all()
 
+    # print(exchanges)
+
     items = { 'actionable': [], 'pending': [], 'complete': [] }
     for ex in exchanges:
         status = 'pending'
@@ -115,6 +117,15 @@ def index():
             status = 'complete'
 
         if found_user:
+            # reordering swaps so that swaps that include this hospital come first
+            includes_me = []
+            not_includes_me = []
+            for inner in ex.exchange:
+                if inner.hospital1 == user.hospital.id or inner.hospital2 == user.hospital.id:
+                    includes_me.append(inner)
+                else:
+                    not_includes_me.append(inner)
+            ex.exchange = includes_me + not_includes_me
             items[status].append(ex)
  
     return render_template('index.html', title='Home', user=user, ppe_types=ppe_types, exchanges=items)
@@ -322,6 +333,7 @@ def admin_sku():
         items.append({
             "sku": item.sku,
             "desc": item.desc,
+            "manufacturer": item.manu,
             "img": item.img.decode(),
             "haves": ha,
             "wants": wa
@@ -338,7 +350,7 @@ def update_admin_sku():
         if q.count() > 0:
             return "SKU already exists"
         else:
-            p = PPE(sku=data["sku"], desc=data["desc"], img=str.encode(data["img"]))
+            p = PPE(sku=data["sku"], desc=data["desc"], img=str.encode(data["img"]), manu=data["manu"])
             db.session.add(p)
             db.session.commit()
     elif data["task"] == "remove":
@@ -350,6 +362,7 @@ def update_admin_sku():
         record = q.first()
         record.desc = data["desc"]
         record.img = str.encode(data["img"])
+        record.manu = data["manu"]
         db.session.commit()
     return jsonify(target="index")
 
@@ -462,6 +475,7 @@ def admin_hospitals():
                 ppe = PPE.query.filter_by(id=have.ppe_id).first()
                 ha.append({
                     "ppe": ppe.sku,
+                    "tooltip": ppe.manu + " " + ppe.desc,
                     "count": have.count,
                 })
             wa = []
@@ -469,6 +483,7 @@ def admin_hospitals():
                 ppe = PPE.query.filter_by(id=want.ppe_id).first()
                 wa.append({
                     "ppe": ppe.sku,
+                    "tooltip": ppe.manu + " " + ppe.desc,
                     "count": want.count
                 })
             items.append({
@@ -532,11 +547,13 @@ def admin_exchange():
             stat=EXCHANGE_UNVERIFIED_TEXT
 
         for x in exchange:
+            ppe = PPE.query.filter_by(id = x.ppe).first()
             i = {
                 "h1": Hospital.query.filter_by(id = x.hospital1).first().name,
                 "h2": Hospital.query.filter_by(id = x.hospital2).first().name,
-                "ppe": PPE.query.filter_by(id = x.ppe).first().sku,
-                "count": x.count
+                "ppe": ppe.sku,
+                "count": x.count,
+                "tooltip": ppe.manu + " " + ppe.desc
             }
             its.append(i)
         item = {
@@ -596,7 +613,7 @@ def update_admin_exchanges():
         record.updated_timestamp = datetime.now()
         db.session.commit()
 
-        # # send email to all unique hospitals in newly verified exchange
+        # send email to all unique hospitals in newly verified exchange
         h_list = []
         # get all hospitals in newly verified exchange
         xs = Exchange.query.filter_by(exchange_id=(int(data["exchange_id"])))
@@ -640,7 +657,12 @@ def update_exchange():
     data = json.loads(request.get_data())
     if not current_user.is_authenticated:
         return jsonify(target="login?next="+data['state'])
+    hospital_id = User.query.filter_by(username=current_user.username).first().hospital_id
+    if not (hospital_id == int(data["hospital_id"])):
+        return jsonify(target="login")
+        
     if data["task"] == "verify":
+        # get all swaps that match this exchange id
         exchanges = db.session.query(Exchange).filter_by(exchange_id=int(data["exchange_id"]))
         eid = -1
         try:
@@ -649,32 +671,52 @@ def update_exchange():
             pass
         if eid >= 0:
             exchanges = exchanges.filter_by(id=eid) 
+
+        # loop through swaps
         for ex in exchanges:
+            # if hospital1 just verified
             if ex.hospital1 == int(data["hospital_id"]):
                 ex.updated_timestamp=datetime.now()
                 ex.is_h1_verified = True
+                # if both members of 
                 if ex.is_h1_verified and ex.is_h2_verified:
                     ex.status = EXCHANGE_ACCEPTED_NOT_SHIPPED
-                    e = db.session.query(Exchanges).filter_by(id=int(data["exchange_id"])).first()
-                    e.updated_timestamp=datetime.now()
-                    # double-check that it's okay to set e.status below, or whether need to check all Exchange(s) in this Exchanges
-                    e.status=EXCHANGE_IN_PROGRESS
             elif ex.hospital2 == int(data["hospital_id"]):
                 ex.updated_timestamp=datetime.now()
                 ex.is_h2_verified = True
                 if ex.is_h1_verified and ex.is_h2_verified:
                     ex.status = EXCHANGE_ACCEPTED_NOT_SHIPPED            
-                    e = db.session.query(Exchanges).filter_by(id=int(data["exchange_id"])).first()
-                    e.updated_timestamp=datetime.now()
-                    # double-check that it's okay to set e.status below, or whether need to check all Exchange(s) in this Exchanges
-                    e.status=EXCHANGE_IN_PROGRESS
+
+        done = True # are all the swaps verified?
+        for ex in exchanges:
+            #print(ex)
+            if not (ex.is_h1_verified and ex.is_h2_verified):
+                print(ex.is_h1_verified, ex.is_h2_verified)
+                done = False
+        print(int(data["hospital_id"]),done)
+        if done:
+            e = db.session.query(Exchanges).filter_by(id=int(data["exchange_id"])).first()
+            e.updated_timestamp=datetime.now()
+            e.status=EXCHANGE_IN_PROGRESS
+            # send email to all unique hospitals in newly verified exchange
+            h_list = []
+            # get all hospitals in newly verified exchange
+            xs = Exchange.query.filter_by(exchange_id=(int(data["exchange_id"])))
+            for x in xs:
+                h_list.append(x.hospital1)
+                h_list.append(x.hospital2)
+            
+            # only keep the unique ones
+            unique_h_list = list(set(h_list))
+            
+            for h in unique_h_list:
+                email.send_hospital_exchange_own_verified(
+                    User.query.filter_by(id=data["user_id"]).first().username,
+                    "localhost:5000",
+                    User.query.filter_by(id=data["user_id"]).first().email,
+                    data["exchange_id"])
 
         db.session.commit()
-        email.send_hospital_exchange_own_verified(
-            User.query.filter_by(id=data["user_id"]).first().username,
-            "localhost:5000",
-            User.query.filter_by(id=data["user_id"]).first().email,
-            data["exchange_id"])
 
     elif data["task"] == "cancel":
         exchanges = db.session.query(Exchange).filter_by(exchange_id=int(data["exchange_id"]))
@@ -702,13 +744,29 @@ def update_exchange():
         exchange.updated_timestamp=datetime.now()
         exchange.status=EXCHANGE_ACCEPTED_SHIPPED
         db.session.commit()
+        email.send_hospital_exchange_partner_shipped(
+            User.query.filter_by(hospital_id=exchange.hospital2).first().username,
+            "localhost:5000",
+            User.query.filter_by(hospital_id=exchange.hospital2).first().email,
+            data["exchange_id"],
+            Hospital.query.filter_by(id=exchange.hospital1).first().name,
+            exchange.count,
+            PPE.query.filter_by(id=exchange.ppe).first().sku)
     elif data["task"] == "received":
         exchange = db.session.query(Exchange)
         exchange = exchange.filter_by(id=int(data["e_id"])).first()
         exchange.is_h2_received = True
         exchange.updated_timestamp=datetime.now()
         exchange.status=EXCHANGE_ACCEPTED_RECEIVED
- 
+        email.send_hospital_exchange_partner_received(
+            User.query.filter_by(hospital_id=exchange.hospital1).first().username,
+            "localhost:5000",
+            User.query.filter_by(hospital_id=exchange.hospital1).first().email,
+            data["exchange_id"],
+            Hospital.query.filter_by(id=exchange.hospital2).first().name,
+            exchange.count,
+            PPE.query.filter_by(id=exchange.ppe).first().sku)
+  
         exchanges = db.session.query(Exchange)
         print("here")
         print(data["exchange_id"])

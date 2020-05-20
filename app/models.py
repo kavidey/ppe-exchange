@@ -61,6 +61,7 @@ class PPE(db.Model):
     sku = db.Column(db.String(16), index=True)
     desc = db.Column(db.String(200))
     img = db.Column(db.BLOB())
+    manu = db.Column(db.String(200))
     wants = db.relationship('Wants', backref='ppe')
     has = db.relationship('Has', backref='ppe')
     # FIXME: there's already a `ppe` property on Exchange (should be called ppe_id), but I don't

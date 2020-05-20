@@ -41,7 +41,7 @@
                         {% for e in ex.exchanges %}
                             <tr>
                                 <td>
-                                    <b>{{ e.h1 }}</b> giving {{ e.count }} instances of {{ e.ppe }} to <b>{{ e.h2 }}</b>
+                                    <b>{{ e.h1 }}</b> giving {{ e.count }} instances of <a href="#" data-toggle="tooltip" title="{{ e.tooltip }}">{{ e.ppe }}</a> to <b>{{ e.h2 }}</b>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -107,6 +107,11 @@
         function hideDeleteCheck() {
             $("#delete-check").hide();
         }
+
+        // Setup all the bootstrap tooltips
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
 
     </script>
 {% endblock %}
