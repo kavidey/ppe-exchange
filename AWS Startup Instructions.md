@@ -1,3 +1,7 @@
+# AWS EC2 Instance Startup Instructions
+
+After creating an EC2 instance of OS type Amazon Linux, ssh into it using the generated security key and follow these instructions to setup the server.
+
 #### Update system
 `sudo yum update -y`
 
