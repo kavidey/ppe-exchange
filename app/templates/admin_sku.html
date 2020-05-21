@@ -30,6 +30,13 @@
                 <div class="modal-body">
                     <div class="form-group row padded">
                         <label style="margin-right: 2em;" for="add-name"><b>SKU <span id="edit-sku"></span>:</b></label>
+                    </div>
+                    <div class="form-group row padded">
+                        <label style="margin-right: 2em;" for="edit-manu"><b>Manufacturer<span id="edit-sku"></span>:</b></label>
+                        <input class="form-control" id="edit-manu" type="textarea" value="">
+                    </div>
+                    <div class="form-group row padded">
+                        <label style="margin-right: 2em;" for="edit-desc"><b>Description<span id="edit-sku"></span>:</b></label>
                         <input class="form-control" id="edit-desc" type="textarea" value="">
                     </div>
                     <div class="form-group row padded">
@@ -51,8 +58,10 @@
         <thead>
             <tr>
             <th scope="col">SKU</th>
+            <th scope="col">Manufacturer</th>
             <th scope="col">Description</th>
             <th scope="col">Image</th>
+            <th scope="col">Supply/Demand</th>
             <th scope="col">Action</th>
             </tr>
         </thead>
@@ -64,14 +73,25 @@
                         <span class="sku">{{ item.sku }}</span>
                     </td>
                     <td>
+                        {{ item.manufacturer }}
+                    </td>
+                    <td>
                         {{ item.desc }}
                     </td>
                     <td>
                         <img style="width: 200px;" src="{{ item.img }}">
                     </td>
                     <td>
+                        {% for h in item.haves %}
+                            {{ h.hospital }} has {{ h.count}}<br>
+                        {% endfor %}
+                        {% for w in item.wants %}
+                            {{ w.hospital }} wants {{ w.count}}<br>
+                        {% endfor %}
+                    </td>
+                    <td>
                         <button id="remove" class="btn btn-danger" onclick="checkRemoveSKU('{{ item.sku }}')">Remove</button>
-                        <button id="edit" class="btn btn-primary" onclick="edit('{{ item.sku }}', '{{ item.desc }}', '{{ item.img }}')">Edit</button>
+                        <button id="edit" class="btn btn-primary" onclick="edit('{{ item.sku }}', '{{ item.manufacturer }}', '{{ item.desc }}', '{{ item.img }}')">Edit</button>
                     </td>
                 </div>
             </tr>
@@ -87,6 +107,13 @@
 	        </div>
 	    </div>
         <div class="form-group row padded">
+	        <label class="form-check-label col-sm-2 col-form-label" for="add-manu"><b>Manufacturer:</b></label>
+	        <div class="col-sm-10">
+		        <input id="add-manu" class="form-control" type="textarea">
+            </div>
+            <br style="margin: 0; padding: 0;">
+        </div>
+        <div class="form-group row padded">
 	        <label class="form-check-label col-sm-2 col-form-label" for="add-desc"><b>Description:</b></label>
 	        <div class="col-sm-10">
 		        <input id="add-desc" class="form-control" type="textarea">
@@ -94,7 +121,7 @@
             <br style="margin: 0; padding: 0;">
         </div>
         <div class="form-group row padded">
-	        <label class="form-check-label col-sm-2 col-form-label" for="add-address"><b>Upload Image:</b></label>
+	        <label class="form-check-label col-sm-2 col-form-label" for="add-image"><b>Upload Image:</b></label>
 	        <div class="col-sm-10">
 		        <button id="add-img" class="btn btn-info">Upload Image</button> <input onchange="importFileandPreview()" accept="image/*" id="file-input" type="file", name="name" style="display: none"> <img style="width: 200px;" id="show-img"></img>
             </div>
@@ -140,13 +167,24 @@
                 return NaN
             }
 
+            if ($("#add-manu").val() == "") {
+                alert("Empty manufacturer");
+                return NaN
+            }
+
             if ($("#add-desc").val() == "") {
                 alert("Empty description");
                 return NaN
             }
 
+            if (reader.result == null) {
+                alert("No image uploaded");
+                return NaN
+            }
+
             item = {
                 "sku": $("#add-sku").val(),
+                "manu": $("#add-manu").val(),
                 "desc": $("#add-desc").val(),
                 "img": reader.result,
                 "task": "add"
@@ -203,6 +241,7 @@
             $('#edit').hide();
             item = {
                 "sku": to_edit,
+                "manu": $('#edit-manu').val(),
                 "desc": $('#edit-desc').val(),
                 "img": $('#edit-img').attr('src'),
                 "task": "edit"
@@ -222,9 +261,10 @@
             });
         }
 
-        function edit(sku, desc, img) {
+        function edit(sku, manu, desc, img) {
             to_edit = sku;
             $('#edit-sku').html(sku);
+            $('#edit-manu').val(manu);
             $('#edit-desc').val(desc);
             $('#edit-img').attr('src', img);
             $('#edit').show();

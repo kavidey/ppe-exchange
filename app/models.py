@@ -39,17 +39,17 @@ class Hospital(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     contact = db.Column(db.String(140), default="")
     address = db.Column(db.String(140), default="")
-    name = db.Column(db.String(140))
     street = db.Column(db.String(128), default="")
     city = db.Column(db.String(128), default="")
     state = db.Column(db.String(128), default="")
     zipcode = db.Column(db.String(128), default="")
     name = db.Column(db.String(140), default="")
     credit = db.Column(db.Integer, default=0)
-    wants = db.relationship('Wants', backref='author1', lazy='dynamic')
-    has = db.relationship('Has', backref='author2', lazy='dynamic')
-    users = db.relationship('User', backref='author3', lazy='dynamic')
-    exchange = db.relationship('Exchange', backref='author7', lazy='dynamic')
+    wants = db.relationship('Wants', backref='hospital')
+    has = db.relationship('Has', backref='hospital')
+    users = db.relationship('User', backref='hospital')
+    exchange1s = db.relationship('Exchange', backref='hospital1_ref', foreign_keys='Exchange.hospital1')
+    exchange2s = db.relationship('Exchange', backref='hospital2_ref', foreign_keys='Exchange.hospital2')
 
     def __repr__(self):
         return '<Hospital {}>'.format(self.name)
@@ -61,12 +61,15 @@ class PPE(db.Model):
     sku = db.Column(db.String(16), index=True)
     desc = db.Column(db.String(200))
     img = db.Column(db.BLOB())
-    wants = db.relationship('Wants', backref='author4', lazy='dynamic')
-    has = db.relationship('Has', backref='author5', lazy='dynamic')
-    exchange = db.relationship('Exchange', backref='author6', lazy='dynamic')
+    manu = db.Column(db.String(200))
+    wants = db.relationship('Wants', backref='ppe')
+    has = db.relationship('Has', backref='ppe')
+    # FIXME: there's already a `ppe` property on Exchange (should be called ppe_id), but I don't
+    # want to change it.
+    exchange = db.relationship('Exchange', backref='ppe_ref')
 
     def __repr__(self):
-        return '<PPE {}>'.format(self.sku)
+        return '<PPE id={} sku={}>'.format(self.id, self.sku)
 
 class Wants(db.Model):
     __tablename__ = "wants"
@@ -77,7 +80,7 @@ class Wants(db.Model):
     count = db.Column(db.Integer)
 
     def __repr__(self):
-        return '<Wants {}>'.format(self.count)
+        return '<Want id={} hospital_id={} ppe_id={} count={}>'.format(self.id, self.hospital_id, self.ppe_id, self.count)
 
 class Has(db.Model):
     __tablename__ = "has"
@@ -88,16 +91,16 @@ class Has(db.Model):
     count = db.Column(db.Integer)
 
     def __repr__(self):
-        return '<Has {}>'.format(self.count)
+        return '<Has id={} hospital_id={} ppe_id={} count={}>'.format(self.id, self.hospital_id, self.ppe_id, self.count)
 
 # EXCHANGE_STATUS
-# algorithm has proposed an exchange, but exchange has not been verified by admin yet: NOT_VERIFIED = 0
+# algorithm has proposed an exchange, but exchange has not been verified by admin yet: NOT_VERIFIED = 0 --> state #1
 EXCHANGE_ADMIN_NOT_VERIFIED = 0
-# normal completion: EXCHANGE_COMPLETE = 1
+# normal completion: EXCHANGE_COMPLETE = 1 --> state #4
 EXCHANGE_COMPLETE = 1
 EXCHANGE_COMPLETE_TEXT = "Complete"
 
-# administrator had to complete: EXCHANGE_COMPLETE_ADMIN = 2
+# administrator had to complete: EXCHANGE_COMPLETE_ADMIN = 2 --> not supported
 EXCHANGE_COMPLETE_ADMIN = 2
 EXCHANGE_COMPLETE_ADMIN_TEXT = "Administrator completed"
 
@@ -109,11 +112,11 @@ EXCHANGE_COMPLETE_HOSPITAL_CANCELED_TEXT = "Hospital canceled"
 EXCHANGE_COMPLETE_ADMIN_CANCELED = 4    
 EXCHANGE_COMPLETE_ADMIN_CANCELED_TEXT = "Administrator canceled"
 
-# exchange has been created, but not verified by parties: EXCHANGE_UNVERIFIED = 11
+# exchange has been created, but not verified by parties: EXCHANGE_UNVERIFIED = 11 --> state #2
 EXCHANGE_UNVERIFIED = 11
-EXCHANGE_UNVERIFIED_TEXT = "Exchange created, but not yet verified"
+EXCHANGE_UNVERIFIED_TEXT = "Exchange created, but not yet verified by hospitals"
 
-# exchange created, verified by parties, but not complete: EXCHANGE_IN_PROGRESS = 12
+# exchange created, verified by parties, but not complete: EXCHANGE_IN_PROGRESS = 12 --> state #3
 EXCHANGE_IN_PROGRESS = 12
 EXCHANGE_IN_PROGRESS_TEXT = "Exchange in progress"
 
@@ -123,10 +126,10 @@ class Exchanges(db.Model):
     created_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     updated_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.Integer,default=EXCHANGE_ADMIN_NOT_VERIFIED)
-    exchange = db.relationship('Exchange', backref='author8', lazy='dynamic')
+    exchange = db.relationship('Exchange', backref='exchanges')
 
     def __repr__(self):
-        return '<Exchanges {}>'.format(self.id)
+        return '<Exchanges id={} status={} exchanges=\n\t{}\n>'.format(self.id, self.status, "\n\t".join(map(repr, self.exchange)))
 
 # HOSPITAL_EXCHANGE_STATUS
 # algorithm has proposed an exchange, but exchange has not been accepted by hospital yet: NOT_ACCEPTED = 1
@@ -151,7 +154,7 @@ class Exchange(db.Model):
     exchange_id = db.Column(db.Integer, db.ForeignKey('exchanges.id'))
     hospital1 = db.Column(db.Integer, db.ForeignKey('hospital.id'))
     hospital1_accept = db.Column(db.Integer, default=0)
-    hospital2 = db.Column(db.Integer)
+    hospital2 = db.Column(db.Integer, db.ForeignKey('hospital.id'))
     hospital2_accept = db.Column(db.Integer, default=0)
     ppe = db.Column(db.Integer, db.ForeignKey('ppe.id'))
     count = db.Column(db.Integer)
@@ -160,6 +163,7 @@ class Exchange(db.Model):
     is_h2_verified = db.Column(db.Boolean(), default=False)
     is_h1_shipped = db.Column(db.Boolean(), default=False)
     is_h2_received = db.Column(db.Boolean(), default=False)
-    
+
     def __repr__(self):
-        return '<Has {}>'.format(self.id)
+        return '<Exchange id={} exchanges_id={} h1={} (accept: {}, verify: {}, shipped: {}) h2={} (accept: {}, verify: {}, received: {}) ppe_id={} count={} status={}>'.\
+            format(self.id, self.exchange_id, self.hospital1, self.hospital1_accept, self.is_h1_verified, self.is_h1_shipped, self.hospital2, self.hospital2_accept, self.is_h2_verified, self.is_h2_received, self.ppe, self.count, self.status)
