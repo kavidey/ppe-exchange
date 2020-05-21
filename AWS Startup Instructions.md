@@ -51,7 +51,7 @@ After creating an EC2 instance of OS type Amazon Linux, ssh into it using the ge
 
 
 #### You should be able to access the server by findings its hostname in the EC2 Console and going to:
-`hostaname:5000'
+`[hostname]:5000`
 
 If you cannot access it, make sure that:
 1. The hostname is correct
