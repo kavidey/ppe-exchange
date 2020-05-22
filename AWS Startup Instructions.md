@@ -1,22 +1,20 @@
 # AWS EC2 Instance Startup Instructions
 
 After creating an EC2 instance of OS type Amazon Linux, ssh into it using the generated security key and follow these instructions to setup the server.
+`ssh -i [keypair].pem ubuntu@[Elastic IP Address]`
 
+## Install Dependencies
 #### Update system
-`sudo yum update -y`
+`sudo apt-get update -y`
 
-#### Install tmux
-`sudo yum install tmux -y
+#### Install tmux and nginx
+`sudo apt-get install nginx -y`
 
-#### Install python3 and pip3
-`sudo yum install python34 -y`
-`sudo yum install python34-pip -y`
+#### Install pip3
+`sudo apt install python3-pip -y`
 
 #### Upgrade pip
 `sudo python3 -m pip install --upgrade pip`
-
-#### Install git
-`sudo yum install git -y`
 
 #### Clone git repository
 `git clone https://github.com/KaviMD/ppe-exchange.git`
@@ -25,11 +23,22 @@ After creating an EC2 instance of OS type Amazon Linux, ssh into it using the ge
 `cd ppe-exchange`
 
 #### Install virtualenv
-`sudo python3 -m pip install virtualenv`
+`sudo apt-get install python3-venv -y`
+`sudo apt install virtualenv -y`
 
+## Setup nginx
+#### Delete default nginx server
+`sudo mv /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default.bak`
+
+#### Create a symlink for the server config file
+`sudo ln -s example.com /etc/nginx/sites-enabled/example.com`
+
+#### Restart nginx to apply changes
+`sudo service nginx restart`
+
+## Setup Website
 #### Create a new virtual enviornment
 `python3 -m venv venv`
-`virtualenv venv`
 
 #### Enter the environment
 `source venv/bin/activate`
@@ -41,7 +50,7 @@ After creating an EC2 instance of OS type Amazon Linux, ssh into it using the ge
 `tmux new -s ppe-exchange`
 
 #### Start the server with
-`flask run -h 0.0.0.0 -p 5000`
+`flask run -h localhost -p 5000`
 
 #### Exit the tmux session with
 `CTRL-b` and then `d`
@@ -51,9 +60,8 @@ After creating an EC2 instance of OS type Amazon Linux, ssh into it using the ge
 
 
 #### You should be able to access the server by findings its hostname in the EC2 Console and going to:
-`[hostname]:5000`
+`[Elastic IP Address]`
 
 If you cannot access it, make sure that:
 1. The hostname is correct
-2. The port is correct
 3. That you have an inbound rule allowing access to port 5000
