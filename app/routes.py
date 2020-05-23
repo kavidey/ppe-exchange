@@ -856,7 +856,7 @@ def admin_create_exchange():
         positive_credits_exchange = es    
 
 #second pass on algorithm
-    exchanges = []
+    #exchanges = []
 # determines total available supply/has for each hospital
     hospital_has = {}
     hospitals = Hospital.query.all()
@@ -874,6 +874,7 @@ def admin_create_exchange():
 
     # looping through each SKU
     for ppe in ppes:
+        exchanges = []
         # query for haves and wants of this SKU
         haves = Has.query.filter_by(ppe_id=ppe.id)
         wants = Wants.query.filter_by(ppe_id=ppe.id)
