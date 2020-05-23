@@ -791,19 +791,16 @@ def update_exchange():
 
 @app.route('/admin_create_exchange', methods=['GET', 'POST'])
 def admin_create_exchange():
-    haves = Has.query.all()
-    wants = Wants.query.all()
-    exchanges = []
-    
     positive_credits_exchange = None
 
-#first pass on algorithm to give hospitals with credits what they need
-    #order hospitals by decreasing number of credits
+    # First Pass of the Exchange Algorithm
+    # * Creates any exchanges between hospitals that have a positive number of credits
+
+    exchanges = []
     hospitals = Hospital.query.order_by(desc(Hospital.credit))
 
-    # for each hospital
     for h in hospitals:
-        # break out of loop if no more hospitals with positive credits
+        # We ignore any hospitals who don't have a positve amount of credits in this algorithm pass
         if h.credit <= 0:
             break
         # get all the wants for this hospital
@@ -855,9 +852,11 @@ def admin_create_exchange():
         db.session.commit()
         positive_credits_exchange = es    
 
-#second pass on algorithm
-    #exchanges = []
-# determines total available supply/has for each hospital
+
+    # Second Pass of the Exchange Algorithm
+    # * Creates any exchanges between hospitals that have 0 or fewer credits 
+ 
+    # Determine total available supply/has for each hospital
     hospital_has = {}
     hospitals = Hospital.query.all()
     for h in hospitals:
@@ -867,19 +866,21 @@ def admin_create_exchange():
             total_has += hh.count
 
         hospital_has[h.id] = total_has
+    print("Total has per hospital:", hospital_has)
 
     hospitals = Hospital.query.order_by(Hospital.credit)
-
     ppes = PPE.query.all()
 
-    # looping through each SKU
+    # Exchanges are created per SKU, so we loop through all of them
     for ppe in ppes:
         exchanges = []
-        # query for haves and wants of this SKU
+
+        # Query for haves and wants of this SKU
         haves = Has.query.filter_by(ppe_id=ppe.id)
         wants = Wants.query.filter_by(ppe_id=ppe.id)
 
-        # get total number of haves and wants for ths SKU
+        # Calculate the total amount of haves and wants for this SKU
+        # * This used to figure out whether it is possible to create an exchange or not
         have_total = 0
         want_total = 0
         for have in haves:
@@ -887,7 +888,8 @@ def admin_create_exchange():
         for want in wants:
             want_total = want_total + want.count
         
-        # want_max for each hospital is the min (hospital_has (total has), want for this SKU)
+        # Calculate the maximum amount that each hospital can ask for (per PPE)
+        # * want_max for each hospital is the min of hospital_has (total has for this hospital) and what this hospital wants for this SKU)
         want_max = {}
         done = {}
         total_want = 0
@@ -896,38 +898,36 @@ def admin_create_exchange():
             want_max[want.hospital_id] = min(hospital_has[want.hospital_id], want.count)
             total_want += want_max[want.hospital_id]
 
-        # calculate ratio as total has/sum of want_max
-        ratio = 1
+        # If there is both has and want for this ppe, create a swap. Otherwise, skip it
         if total_want > 0 and have_total > 0:
+            print("Creating exchanges for ppe:", ppe.sku)
+
+            # Calculate ratio of total Has/Wants for this PPE
+            ratio = 1
             if have_total >= total_want:
                 ratio = 1
             else:
                 ratio = have_total/total_want
+            print(" * Have/Want ratio:", ratio)
 
-            print("unordered haves")
-            for have in haves:
-                print(have.count)
-
-            # sort haves based on hospital credits. 
+            # Sort haves based on hospital credits. 
             haves = []
             hospitals = Hospital.query.order_by(Hospital.credit)
             for h in hospitals:
                 ha = Has.query.filter_by(hospital_id=h.id, ppe_id=ppe.id)
                 if ha.count() > 0:
                     haves.append(ha.first())
-        
-            print("ordered haves")
-            for have in haves:
-                print(have.count)
-
+            
+            print(" * Sorted haves:", haves)
 
             for have in haves:
                 send_amount = have.count
 
                 for want in wants:
                     if not done[want.hospital_id]:
-                        # shouldn't be want.count, but want_max
-                        want_amount = min(want_max[want.hospital_id], hospital_has[want.hospital_id])
+                        # We already took the min while calculating want_max, so we don't need to take it again
+                        # want_amount = min(want_max[want.hospital_id], hospital_has[want.hospital_id])
+                        want_amount = int(want_max[want.hospital_id]*ratio)
 
                         sending = min(send_amount, want_amount)
                         send_amount = send_amount - sending
@@ -936,13 +936,14 @@ def admin_create_exchange():
                         if want_amount == 0:
                             done[want.hospital_id]=True
                         want.count = want.count - sending
-                        if sending > 0:                                 
-                            exchanges.append({
+                        if sending > 0:
+                            swap = {
                                 "tx_hospital": have.hospital_id,
                                 "rx_hospital": want.hospital_id,
                                 "ppe": have.ppe_id,
                                 "count": sending
-                            })
+                            }
+                            exchanges.append(swap)
                         if send_amount == 0:
                             break    
                     # not enough supply to meet demand
@@ -959,7 +960,9 @@ def admin_create_exchange():
                 eid = es.id
                 db.session.add(es)
                 # loop through created exchanges
+                print(" * Swaps:")
                 for exchange in exchanges:
+                    print("    *", exchange)
                     transfer = exchange["count"]
 
                     # first credits
@@ -978,6 +981,6 @@ def admin_create_exchange():
                     db.session.add(e)
                 db.session.commit()
         else:
-            print("no joy",ppe.sku)
-    print(exchanges)
+            print("Could not create exchange for ppe:", ppe.sku)
+    print("")
     return redirect(url_for('admin_exchange'))
