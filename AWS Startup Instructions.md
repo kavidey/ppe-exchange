@@ -28,7 +28,7 @@ After creating an EC2 instance of OS type Amazon Linux, ssh into it using the ge
 
 ## Setup nginx [guide] (https://chrisdtran.com/2017/deploy-flask-on-ec2/)
 #### Delete default nginx server
-`sudo mv /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default.bak`
+`sudo rm /etc/nginx/sites-enabled/default`
 
 #### Create a symlink for the server config file
 `sudo ln -s ~/ppe-exchange/example.com /etc/nginx/sites-enabled/example.com`
