@@ -34,16 +34,17 @@
             {% endfor %}
         </p>
         <p>
-            {{ form.hospital_name.label }}<br>
-            {{ form.hospital_name(class_="form-control") }}<br>
-            {% for error in form.hospital_name.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
             {{ form.contact.label }}<br>
             {{ form.contact(size=64, class_="form-control") }}<br>
             {% for error in form.contact.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <h3>Hospital Shipping and Recieving Address</h3>
+        <p>
+            {{ form.hospital_name.label }}<br>
+            {{ form.hospital_name(class_="form-control") }}<br>
+            {% for error in form.hospital_name.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
