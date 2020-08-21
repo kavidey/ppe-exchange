@@ -447,7 +447,7 @@ def update_admin_users():
         email.send_user_verification(
             User.query.filter_by(id=data["user_id"]).first().username,
             key,
-            "localhost:5000",
+            app.config.get("PPE_HOSTNAME"),
             User.query.filter_by(id=data["user_id"]).first().email)
         
     elif data["task"] == "cancel":
@@ -627,7 +627,7 @@ def update_admin_exchanges():
         for h in unique_h_list:
                 email.send_hospital_exchange_creation(
                     User.query.filter_by(hospital_id=h).first().username,
-                    "localhost:5000",
+                    app.config.get("PPE_HOSTNAME"),
                     User.query.filter_by(hospital_id=h).first().email,
                     data["exchange_id"])
         
@@ -712,7 +712,7 @@ def update_exchange():
             for h in unique_h_list:
                 email.send_hospital_exchange_own_verified(
                     User.query.filter_by(id=data["user_id"]).first().username,
-                    "localhost:5000",
+                    app.config.get("PPE_HOSTNAME"),
                     User.query.filter_by(id=data["user_id"]).first().email,
                     data["exchange_id"])
 
@@ -746,7 +746,7 @@ def update_exchange():
         db.session.commit()
         email.send_hospital_exchange_partner_shipped(
             User.query.filter_by(hospital_id=exchange.hospital2).first().username,
-            "localhost:5000",
+            app.config.get("PPE_HOSTNAME"),
             User.query.filter_by(hospital_id=exchange.hospital2).first().email,
             data["exchange_id"],
             Hospital.query.filter_by(id=exchange.hospital1).first().name,
@@ -760,7 +760,7 @@ def update_exchange():
         exchange.status=EXCHANGE_ACCEPTED_RECEIVED
         email.send_hospital_exchange_partner_received(
             User.query.filter_by(hospital_id=exchange.hospital1).first().username,
-            "localhost:5000",
+            app.config.get("PPE_HOSTNAME"),
             User.query.filter_by(hospital_id=exchange.hospital1).first().email,
             data["exchange_id"],
             Hospital.query.filter_by(id=exchange.hospital2).first().name,

@@ -3,3 +3,4 @@ venv/
 .vscode/
 app.db
 ppe-exchangewa.pem
+config.yaml

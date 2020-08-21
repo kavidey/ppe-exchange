@@ -1,0 +1,6 @@
+email:
+  uname: test@gmail.com
+  pwd: 1234
+
+server:
+  hostname: localhost:5000
