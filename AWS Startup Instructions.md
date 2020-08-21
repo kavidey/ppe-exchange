@@ -33,6 +33,10 @@ After creating an EC2 instance of OS type Amazon Linux, ssh into it using the ge
 #### Create a symlink for the server config file
 `sudo ln -s ~/ppe-exchange/example.com /etc/nginx/sites-enabled/example.com`
 
+#### Copy the SSL Certificate and Key on to the server using scp
+
+#### Update the example.com file with the correct domain name and SSL Certificate and Key locations
+
 #### Restart nginx to apply changes
 `sudo service nginx restart`
 
