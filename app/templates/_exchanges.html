@@ -160,11 +160,11 @@
 
                 <td>
                     {% if e.hospital1 == user.hospital.id %}
-                        Giving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_ref.manu }} {{ e.ppe_ref.desc }}">{{ e.ppe_ref.sku }}</a> to {{ e.hospital2_ref.name }}
+                        Giving {{ e.count }} of <a href="#" data-toggle="tooltip" title="<p>{{ e.ppe_ref.manu }} {{ e.ppe_ref.desc }}</p><img style='width: 100%;'src='{{ e.ppe_ref.img.decode() }}'/>">{{ e.ppe_ref.sku }}</a> to {{ e.hospital2_ref.name }}
                     {% elif e.hospital2 == user.hospital.id %}
-                        Receiving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_ref.manu }} {{ e.ppe_ref.desc }}">{{ e.ppe_ref.sku }}</a> from {{ e.hospital1_ref.name }}
+                        Receiving {{ e.count }} of <a href="#" data-toggle="tooltip" title="<p>{{ e.ppe_ref.manu }} {{ e.ppe_ref.desc }}</p><img style='width: 100%;'src='{{ e.ppe_ref.img.decode() }}'/>">{{ e.ppe_ref.sku }}</a> from {{ e.hospital1_ref.name }}
                     {% else %}
-                        {{ e.hospital1_ref.name }} giving {{ e.count }} of <a href="#" data-toggle="tooltip" title="{{ e.ppe_ref.manu }} {{ e.ppe_ref.desc }}">{{ e.ppe_ref.sku }}</a> to {{ e.hospital2_ref.name }}
+                        {{ e.hospital1_ref.name }} giving {{ e.count }} of <a href="#" data-toggle="tooltip" title="<p>{{ e.ppe_ref.manu }} {{ e.ppe_ref.desc }}</p><img style='width: 100%;'src='{{ e.ppe_ref.img.decode() }}'/>">{{ e.ppe_ref.sku }}</a> to {{ e.hospital2_ref.name }}
                     {% endif %}
                 </td>
 
@@ -284,8 +284,11 @@
 
     // Setup all the bootstrap tooltips
     $(function () {
-        $('[data-toggle="tooltip"]').tooltip()
-    })
+        $('[data-toggle="tooltip"]').tooltip({
+            animated: 'fade',
+            html: true
+        });
+    });
 </script>
 
 <style>

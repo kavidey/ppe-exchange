@@ -41,7 +41,7 @@
                         {% for e in ex.exchanges %}
                             <tr>
                                 <td>
-                                    <b>{{ e.h1 }}</b> giving {{ e.count }} instances of <a href="#" data-toggle="tooltip" title="{{ e.tooltip }}">{{ e.ppe }}</a> to <b>{{ e.h2 }}</b>
+                                    <b>{{ e.h1 }}</b> giving {{ e.count }} instances of <a href="#" data-toggle="tooltip" title="<p>{{ e.tooltip }}</p><img style='width: 100%;'src='{{ e.img }}'/>">{{ e.ppe }}</a> to <b>{{ e.h2 }}</b>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -110,8 +110,11 @@
 
         // Setup all the bootstrap tooltips
         $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
+            $('[data-toggle="tooltip"]').tooltip({
+                animated: 'fade',
+                html: true
+            });
+        });
 
     </script>
 {% endblock %}

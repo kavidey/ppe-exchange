@@ -477,6 +477,7 @@ def admin_hospitals():
                     "ppe": ppe.sku,
                     "tooltip": ppe.manu + " " + ppe.desc,
                     "count": have.count,
+                    "img": ppe.img.decode()
                 })
             wa = []
             for want in Wants.query.filter_by(hospital_id=item.id):
@@ -484,7 +485,8 @@ def admin_hospitals():
                 wa.append({
                     "ppe": ppe.sku,
                     "tooltip": ppe.manu + " " + ppe.desc,
-                    "count": want.count
+                    "count": want.count,
+                    "img": ppe.img.decode()
                 })
             items.append({
                 "id": item.id,
@@ -553,7 +555,8 @@ def admin_exchange():
                 "h2": Hospital.query.filter_by(id = x.hospital2).first().name,
                 "ppe": ppe.sku,
                 "count": x.count,
-                "tooltip": ppe.manu + " " + ppe.desc
+                "tooltip": ppe.manu + " " + ppe.desc,
+                "img": ppe.img.decode()
             }
             its.append(i)
         item = {
@@ -714,7 +717,7 @@ def update_exchange():
                     PPE.query.filter_by(id=x.ppe).first().sku,
                     [receiving_hospital.street, receiving_hospital.city, receiving_hospital.state, receiving_hospital.zipcode],
                     receiving_hospital.name)
-                    
+
         db.session.commit()
 
     elif data["task"] == "cancel":
