@@ -1,0 +1,14 @@
+<p>Hello {{username}},</p>
+
+{% if linking %}
+    <p>{{ text1 }}</p>
+    <address>
+        {{address[0]}}<br>
+        {{address[1]}}, {{address[2]}}, {{address[3]}}<br>
+    </address>
+    <p>Please login to the <a href={{link}}><strong>PPE-exchange site</strong></a>, {{ text2 }}</p>
+{% else %}
+    <p>{{ text1 }} <br> {{ text2 }}\n"</p>
+{% endif %}
+
+<p>-PPE Exchange</p>

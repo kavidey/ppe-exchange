@@ -489,7 +489,7 @@ def admin_hospitals():
             items.append({
                 "id": item.id,
                 "name": item.name,
-                "address": item.address+", "+item.street+", "+item.city+", "+item.state,
+                "address": item.street+", "+item.city+", "+item.state+", "+item.zipcode,
                 "credit": item.credit,
                 "haves": ha,
                 "wants": wa
@@ -689,7 +689,6 @@ def update_exchange():
 
         done = True # are all the swaps verified?
         for ex in exchanges:
-            #print(ex)
             if not (ex.is_h1_verified and ex.is_h2_verified):
                 print(ex.is_h1_verified, ex.is_h2_verified)
                 done = False
@@ -702,10 +701,23 @@ def update_exchange():
             h_list = []
             # get all hospitals in newly verified exchange
             xs = Exchange.query.filter_by(exchange_id=(int(data["exchange_id"])))
+
+            # 1 is sending 2 is receiving
             for x in xs:
-                h_list.append(x.hospital1)
-                h_list.append(x.hospital2)
+                shipping_user = User.query.filter_by(hospital_id=x.hospital1).first()
+                shipping_hospital = Hospital.query.filter_by(id=x.hospital1).first()
+                email.send_hospital_exchange_verified_ship_address(shipping_user.username,
+                    app.config.get("PPE_HOSTNAME"),
+                    shipping_user.email,
+                    data["exchange_id"],
+                    x.count,
+                    PPE.query.filter_by(id=x.ppe).first().sku,
+                    [shipping_hospital.street, shipping_hospital.city, shipping_hospital.state, shipping_hospital.zipcode],
+                    shipping_hospital.name)
+                #h_list.append(x.hospital1)
+                #h_list.append(x.hospital2)
             
+            '''
             # only keep the unique ones
             unique_h_list = list(set(h_list))
             
@@ -715,6 +727,7 @@ def update_exchange():
                     app.config.get("PPE_HOSTNAME"),
                     User.query.filter_by(id=data["user_id"]).first().email,
                     data["exchange_id"])
+            '''
 
         db.session.commit()
 

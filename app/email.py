@@ -24,6 +24,19 @@ def send_hospital_exchange_creation(username, hostname, email, exchange_id):
                     html=render_template("email_exchange.html", username=username, link=url, linking=True, id=exchange_id, text1=text1, text2=text2))
     mail.send(msg)
 
+
+def send_hospital_exchange_verified_ship_address(username, hostname, email, exchange_id, count, sku, address, recv_hospital):
+    url = "http://"+hostname + "/exchanges"
+    text1=f"All parties have verified participation in exchange #{exchange_id}. Please ship {count} of SKU {sku} to {recv_hospital}. Their address is:"
+    text2="to indicate shipping of PPE."
+    msg = Message(subject="PPE Exchange - Ready to Ship",
+                    sender=app.config.get("MAIL_USERNAME"),
+                    recipients=[email],
+                    body=" ",
+                    html=render_template("email_ship.html", username=username, link=url, linking=True, address=address, text1=text1, text2=text2))
+    mail.send(msg)
+
+# NOT USED
 def send_hospital_exchange_own_verified(username, hostname, email, exchange_id):
     url = "http://"+hostname + "/exchanges"
     text1="Thank you for verifying your participation in PPE exchange #" + exchange_id + "."
@@ -35,6 +48,7 @@ def send_hospital_exchange_own_verified(username, hostname, email, exchange_id):
                     html=render_template("email_exchange.html", username=username, link=url, linking=True, id=exchange_id, text1=text1, text2=text2))
     mail.send(msg)
 
+# NOT USED
 def send_hospital_exchange_partner_verified(username, hostname, email, exchange_id):
     url = "http://"+hostname + "/exchanges"
     text1="A partner hospital in PPE exchange " + exchange_id + "has verified their participation."
@@ -46,6 +60,7 @@ def send_hospital_exchange_partner_verified(username, hostname, email, exchange_
                     html=render_template("email_exchange.html", text=text1, text2=text2, username=username, link=url, linking=True, id=exchange_id))
     mail.send(msg)
 
+# NOT USED
 def send_hospital_exchange_all_verified(username, hostname, email, exchange_id):
     url = "http://"+hostname + "/index"
     text1="All partner hospitals (including yours) in PPE exchange " + exchange_id + "have verified their participation."
@@ -57,6 +72,7 @@ def send_hospital_exchange_all_verified(username, hostname, email, exchange_id):
                     html=render_template("email_exchange.html", text=text1, text2=text2, username=username, link=url, linking=True, id=exchange_id))
     mail.send(msg)
 
+# NOT USED
 def send_hospital_exchange_own_shipped(username, hostname, email, exchange_id):
     url = "http://"+hostname + "/exchanges"
     text1="Thank you for confirming a shipment for PPE exchange" + exchange_id+"." 
@@ -79,6 +95,7 @@ def send_hospital_exchange_partner_shipped(username, hostname, email, exchange_i
                     html=render_template("email_exchange.html", text1=text1, text2=text2, username=username, link=url, linking=True, id=exchange_id))
     mail.send(msg)
 
+# NOT USED
 def send_hospital_exchange_own_received(username, hostname, email, exchange_id):
     url = "http://"+hostname + "/exchanges"
     text1="Thank you for confirming receipt of a shipment for PPE exchange" + exchange_id+"." 
@@ -101,6 +118,7 @@ def send_hospital_exchange_partner_received(username, hostname, email, exchange_
                     html=render_template("email_exchange.html", text1=text1, text2=text2, username=username, link=url, linking=True, id=exchange_id))
     mail.send(msg)
 
+# NOT USED
 def send_hospital_exchange_all_received(username, hostname, email, exchange_id):
     url = "http://"+hostname + "/exchanges"
     text1="All partner hospitals (including yours) in PPE exchange " + exchange_id + "have received their expected PPE."
