@@ -705,30 +705,16 @@ def update_exchange():
             # 1 is sending 2 is receiving
             for x in xs:
                 shipping_user = User.query.filter_by(hospital_id=x.hospital1).first()
-                shipping_hospital = Hospital.query.filter_by(id=x.hospital1).first()
+                receiving_hospital = Hospital.query.filter_by(id=x.hospital2).first()
                 email.send_hospital_exchange_verified_ship_address(shipping_user.username,
                     app.config.get("PPE_HOSTNAME"),
                     shipping_user.email,
                     data["exchange_id"],
                     x.count,
                     PPE.query.filter_by(id=x.ppe).first().sku,
-                    [shipping_hospital.street, shipping_hospital.city, shipping_hospital.state, shipping_hospital.zipcode],
-                    shipping_hospital.name)
-                #h_list.append(x.hospital1)
-                #h_list.append(x.hospital2)
-            
-            '''
-            # only keep the unique ones
-            unique_h_list = list(set(h_list))
-            
-            for h in unique_h_list:
-                email.send_hospital_exchange_own_verified(
-                    User.query.filter_by(id=data["user_id"]).first().username,
-                    app.config.get("PPE_HOSTNAME"),
-                    User.query.filter_by(id=data["user_id"]).first().email,
-                    data["exchange_id"])
-            '''
-
+                    [receiving_hospital.street, receiving_hospital.city, receiving_hospital.state, receiving_hospital.zipcode],
+                    receiving_hospital.name)
+                    
         db.session.commit()
 
     elif data["task"] == "cancel":
