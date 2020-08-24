@@ -609,9 +609,11 @@ def update_admin_exchanges():
             x.status=EXCHANGE_ADMIN_CANCELED
             # undo has and wants
             transfer = x.count
-            has = Has.query.filter_by(hospital_id=x.hospital1).first()
+            has = Has.query.filter_by(hospital_id=x.hospital1)\
+                .filter_by(ppe_id=x.ppe).first()
             has.count += transfer
-            wants = Wants.query.filter_by(hospital_id=x.hospital2).first()
+            wants = Wants.query.filter_by(hospital_id=x.hospital2)\
+                .filter_by(ppe_id=x.ppe).first()
             wants.count += transfer
 
             # undo credit transfers
@@ -746,6 +748,22 @@ def update_exchange():
         for ex in exchanges:
             ex.updated_timestamp=datetime.now()
             ex.status=EXCHANGE_HOSPITAL_CANCELED
+
+            # undo has and wants
+            transfer = ex.count
+            has = Has.query.filter_by(hospital_id=ex.hospital1)\
+                .filter_by(ppe_id=ex.ppe).first()
+            has.count += transfer
+            wants = Wants.query.filter_by(hospital_id=ex.hospital2)\
+                .filter_by(ppe_id=ex.ppe).first()
+            wants.count += transfer
+
+            # undo credit transfers
+            tx = Hospital.query.filter_by(id=ex.hospital1).first()
+            tx.credit -= transfer
+
+            rx = Hospital.query.filter_by(id=ex.hospital2).first()
+            rx.credit += transfer
 
         e = db.session.query(Exchanges).filter_by(id=int(data["exchange_id"])).first()
 
