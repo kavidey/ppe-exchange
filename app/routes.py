@@ -583,9 +583,22 @@ def update_admin_exchanges():
         record.status = EXCHANGE_COMPLETE_ADMIN_CANCELED
         record.updated_timestamp = datetime.now()
         exchange = Exchange.query.filter_by(exchange_id=int(data["exchange_id"]))
+
+        h_list = []
         for x in exchange:
-            print(x.id)
+            h_list.append(x.hospital1)
+            h_list.append(x.hospital2)
             x.status=EXCHANGE_ADMIN_CANCELED
+        
+        h_list = list(set(h_list))
+
+        for hid in h_list:
+            h_user = User.query.filter_by(hospital_id=hid).first()
+            email.send_hospital_admin_canceled(
+                h_user.username,
+                app.config.get("PPE_HOSTNAME"),
+                h_user.email,
+                data["exchange_id"])
         db.session.commit()
     elif data["task"] == "cancel_pre_verify":
         q = Exchanges.query.filter_by(id=int(data["exchange_id"])).first()
