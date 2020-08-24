@@ -8,7 +8,7 @@ from app.models import User, PPE, Hospital, Wants, Has, Exchanges, Exchange, EXC
 from app import crypto
 from app import email
 from datetime import datetime
-from sqlalchemy import desc, and_, or_
+from sqlalchemy import desc, and_, or_, asc
 from sqlalchemy.orm import contains_eager
 
 import json
@@ -527,7 +527,7 @@ def admin_exchange():
     if not current_user.is_authenticated:
         return redirect(url_for('login',next='/admin_exchange'))
     
-    exchanges = Exchanges.query.all()
+    exchanges = Exchanges.query.order_by(desc(Exchanges.updated_timestamp)).all()
     print(len(exchanges))
     items = []
     for ex in exchanges:
