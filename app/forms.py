@@ -43,8 +43,20 @@ class RegistrationForm(FlaskForm):
         if user is not None:
             raise ValidationError('Please use a different email address.')
 
-class AdminAuthorizationForm(FlaskForm):
+
+class ResetPassword(FlaskForm):
+    email = StringField("Enter your user account's verified email address and we will send you a password reset link.", validators=[DataRequired(), Email()])
+    submit = SubmitField('Send password reset email')
+
+
+    def validate_email(self, email):
+        user = User.query.filter_by(email=email.data).first()
+        if user is None:
+            raise ValidationError('No user exists with that email')
+
+
+class ChangePassword(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     password2 = PasswordField(
         'Repeat Password', validators=[DataRequired(), EqualTo('password')])
-    submit = SubmitField('Register')
+    submit = SubmitField('Update Password')

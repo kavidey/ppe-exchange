@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug import secure_filename
 from app import app, db, crypto, email
-from app.forms import LoginForm, RegistrationForm, VerifyForm, AdminAuthorizationForm
+from app.forms import LoginForm, RegistrationForm, VerifyForm, ChangePassword, ResetPassword
 from app.models import User, PPE, Hospital, Wants, Has, Exchanges, Exchange, EXCHANGE_COMPLETE, EXCHANGE_COMPLETE_TEXT, EXCHANGE_COMPLETE_ADMIN, EXCHANGE_COMPLETE_ADMIN_TEXT, EXCHANGE_COMPLETE_HOSPITAL_CANCELED, EXCHANGE_COMPLETE_HOSPITAL_CANCELED_TEXT, EXCHANGE_COMPLETE_ADMIN_CANCELED, EXCHANGE_COMPLETE_ADMIN_CANCELED_TEXT, EXCHANGE_UNVERIFIED, EXCHANGE_UNVERIFIED_TEXT, EXCHANGE_IN_PROGRESS, EXCHANGE_IN_PROGRESS_TEXT, EXCHANGE_NOT_ACCEPTED, EXCHANGE_ACCEPTED_NOT_SHIPPED, EXCHANGE_ACCEPTED_SHIPPED, EXCHANGE_ACCEPTED_RECEIVED, EXCHANGE_HOSPITAL_CANCELED, EXCHANGE_ADMIN_CANCELED, EXCHANGE_ADMIN_NOT_VERIFIED
 from app import crypto
 from app import email
@@ -185,7 +185,7 @@ def verify():
         return redirect(url_for('login',next='/verify?key='+request.args.get("key")))
 
     user = User.query.filter_by(username=current_user.username).first()
-    if request.args.get("key") == user.verification_key:
+    if request.args.get("key") == user.verification_key and user.verification_key != "":
         form = VerifyForm()
         if form.validate_on_submit():
             # Mark user as verified
@@ -366,25 +366,34 @@ def update_admin_sku():
         db.session.commit()
     return jsonify(target="index")
 
-@app.route('/admin_auth', methods=['GET', 'POST'])
-def admin_auth():
-    auth_key = {}
-    with open('auth_key.txt') as json_file:
-        auth_key = json.load(json_file)
-    if request.args.get("key") == auth_key["key"]:
-        form  = AdminAuthorizationForm()
+@app.route('/change_password', methods=['GET', 'POST'])
+def change_password():
+    user = User.query.filter_by(password_reset_key=request.args.get("key")).first()
+    if user is not None and request.args.get("key") != "":
+        form  = ChangePassword()
         if form.validate_on_submit():
-            user = User(username="admin", email=auth_key["admin_email"], is_admin=True, is_verified=True)
             user.set_password(form.password.data)
-            User.query.filter_by(username="admin").delete()
-            db.session.add(user)
+            user.password_reset_key = ""
             db.session.commit()
-            os.remove("auth_key.txt")
-            flash('Congratulations, you are now a registered administrator!')
+            flash('Password succesfully updated')
             return redirect(url_for('login'))
-        return render_template('admin_auth.html', title='Admin Setup', form=form)
+        return render_template('change_password.html', title='Change Password', form=form)
     else:
         return render_template('404.html')
+
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    form  = ResetPassword()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        key = crypto.generate_key()
+        user.password_reset_key = key
+        db.session.commit()
+        
+        email.send_reset_password(app.config.get("PPE_HOSTNAME"), user.email, key, user.username)
+        flash('You should recieve an email with instructions on how to reset your password soon')
+        return redirect(url_for('login'))
+    return render_template('reset_password.html', title='Reset Password', form=form)
 
 @app.route('/admin_users', methods=['GET', 'POST'])
 def admin_users():

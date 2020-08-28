@@ -151,3 +151,13 @@ def send_hospital_hospital_canceled(username, hostname, email, exchange_id):
                     body=" ",
                     html=render_template("email_exchange.html", text=text1, text2=text2, username=username, link=url, linking=True, id=exchange_id))
     mail.send(msg)
+
+def send_reset_password(hostname, email, auth_key, username):
+    url = "http://" + hostname + "/change_password?key="+auth_key
+
+    msg = Message(subject="PPE Exchange Admin Setup",
+                    sender=app.config.get("MAIL_USERNAME"),
+                    recipients=[email],
+                    body="Click this link to set the admin password for PPE Exchange \n"+url,
+                    html=render_template("email_reset_password.html", username=username, link=url))
+    mail.send(msg)
