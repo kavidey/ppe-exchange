@@ -15,7 +15,7 @@ class User(UserMixin, db.Model):
     is_verified = db.Column(db.Boolean(), default=False)
     verification_key = db.Column(db.String(128))
     hospital_contact = db.Column(db.String(128))
-    hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id'))
+    hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id', ondelete='CASCADE'))
     hospital_street = db.Column(db.String(128))
     hospital_city = db.Column(db.String(128))
     hospital_state = db.Column(db.String(128))
@@ -45,11 +45,11 @@ class Hospital(db.Model):
     zipcode = db.Column(db.String(128), default="")
     name = db.Column(db.String(140), default="")
     credit = db.Column(db.Integer, default=0)
-    wants = db.relationship('Wants', backref='hospital')
+    wants = db.relationship('Wants', backref='hospital', passive_deletes=True)
     has = db.relationship('Has', backref='hospital')
-    users = db.relationship('User', backref='hospital')
-    exchange1s = db.relationship('Exchange', backref='hospital1_ref', foreign_keys='Exchange.hospital1')
-    exchange2s = db.relationship('Exchange', backref='hospital2_ref', foreign_keys='Exchange.hospital2')
+    users = db.relationship('User', backref='hospital', passive_deletes=True)
+    exchange1s = db.relationship('Exchange', backref='hospital1_ref', foreign_keys='Exchange.hospital1', passive_deletes=True)
+    exchange2s = db.relationship('Exchange', backref='hospital2_ref', foreign_keys='Exchange.hospital2', passive_deletes=True)
 
     def __repr__(self):
         return '<Hospital {}>'.format(self.name)
@@ -62,11 +62,11 @@ class PPE(db.Model):
     desc = db.Column(db.String(200))
     img = db.Column(db.BLOB())
     manu = db.Column(db.String(200))
-    wants = db.relationship('Wants', backref='ppe')
-    has = db.relationship('Has', backref='ppe')
+    wants = db.relationship('Wants', backref='ppe', passive_deletes=True)
+    has = db.relationship('Has', backref='ppe', passive_deletes=True)
     # FIXME: there's already a `ppe` property on Exchange (should be called ppe_id), but I don't
     # want to change it.
-    exchange = db.relationship('Exchange', backref='ppe_ref')
+    exchange = db.relationship('Exchange', backref='ppe_ref', passive_deletes=True)
 
     def __repr__(self):
         return '<PPE id={} sku={}>'.format(self.id, self.sku)
@@ -75,8 +75,8 @@ class Wants(db.Model):
     __tablename__ = "wants"
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id'))
-    ppe_id = db.Column(db.Integer, db.ForeignKey('ppe.id'))
+    hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id', ondelete='CASCADE'))
+    ppe_id = db.Column(db.Integer, db.ForeignKey('ppe.id', ondelete='CASCADE'))
     count = db.Column(db.Integer)
 
     def __repr__(self):
@@ -86,8 +86,8 @@ class Has(db.Model):
     __tablename__ = "has"
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id'))
-    ppe_id = db.Column(db.Integer, db.ForeignKey('ppe.id'))
+    hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id', ondelete='CASCADE'))
+    ppe_id = db.Column(db.Integer, db.ForeignKey('ppe.id', ondelete='CASCADE'))
     count = db.Column(db.Integer)
 
     def __repr__(self):
@@ -126,7 +126,7 @@ class Exchanges(db.Model):
     created_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     updated_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.Integer,default=EXCHANGE_ADMIN_NOT_VERIFIED)
-    exchange = db.relationship('Exchange', backref='exchanges')
+    exchange = db.relationship('Exchange', backref='exchanges', passive_deletes=True)
 
     def __repr__(self):
         return '<Exchanges id={} status={} exchanges=\n\t{}\n>'.format(self.id, self.status, "\n\t".join(map(repr, self.exchange)))
@@ -151,12 +151,12 @@ class Exchange(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     create_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     updated_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    exchange_id = db.Column(db.Integer, db.ForeignKey('exchanges.id'))
-    hospital1 = db.Column(db.Integer, db.ForeignKey('hospital.id'))
+    exchange_id = db.Column(db.Integer, db.ForeignKey('exchanges.id', ondelete='CASCADE'))
+    hospital1 = db.Column(db.Integer, db.ForeignKey('hospital.id', ondelete='CASCADE'))
     hospital1_accept = db.Column(db.Integer, default=0)
-    hospital2 = db.Column(db.Integer, db.ForeignKey('hospital.id'))
+    hospital2 = db.Column(db.Integer, db.ForeignKey('hospital.id', ondelete='CASCADE'))
     hospital2_accept = db.Column(db.Integer, default=0)
-    ppe = db.Column(db.Integer, db.ForeignKey('ppe.id'))
+    ppe = db.Column(db.Integer, db.ForeignKey('ppe.id', ondelete='CASCADE'))
     count = db.Column(db.Integer)
     status = db.Column(db.Integer, default=EXCHANGE_NOT_ACCEPTED)
     is_h1_verified = db.Column(db.Boolean(), default=False)
