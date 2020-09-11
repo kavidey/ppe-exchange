@@ -1,5 +1,5 @@
 html { font-family: sans-serif; background: #eee; padding: 1rem; }
-body { max-width: 960px; margin: 0 auto;  }
+body { margin: 3em;}
 h1 {  color: #377ba8; margin: 1rem 0; padding: 1rem; }
 a { color: #377ba8; }
 hr { border: none; border-top: 1px solid lightgray; }
@@ -24,15 +24,15 @@ nav ul li a, nav ul li span, header .action { display: block; padding: 3rem; }
 }
 .form-control {
     display:inline;
-    width:auto;
+    width: auto;
 }
 .padded {
     padding: 1rem;
 }
 .image-crop {
     max-width: 200px;
-    max-height 100px;
-    overlfow: hidden;
+    max-height: 100px;
+    overflow: hidden;
     margin: 1rem;
 }
 .content {
