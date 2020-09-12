@@ -185,7 +185,9 @@ def verify():
         return redirect(url_for('login',next='/verify?key='+request.args.get("key")))
 
     user = User.query.filter_by(username=current_user.username).first()
+    print(user, request.args.get("key"), user.verification_key)
     if request.args.get("key") == user.verification_key and user.verification_key != "":
+        print("verifying user")
         form = VerifyForm()
         if form.validate_on_submit():
             # Mark user as verified
@@ -200,8 +202,10 @@ def verify():
             return redirect(url_for('index'))
         return render_template('verify.html', title='Verify', form=form)
     elif user.is_verified:
+        print("user is already verified")
         return redirect(url_for("index"))
     else:
+        print("invalid something")
         return render_template('404.html')
 
 @app.route('/wants', methods=['GET', 'POST'])
@@ -308,7 +312,7 @@ def update_want_need():
 
 @app.route('/admin_sku', methods=['GET', 'POST'])
 def admin_sku():
-    if not current_user.is_authenticated:
+    if (not current_user.is_authenticated) or (not User.query.filter_by(username=current_user.username).first().is_admin):
         return redirect(url_for('login',next='/admin_sku'))
 
     skus = PPE.query.all()
@@ -397,7 +401,7 @@ def reset_password():
 
 @app.route('/admin_users', methods=['GET', 'POST'])
 def admin_users():
-    if not current_user.is_authenticated:
+    if (not current_user.is_authenticated) or (not User.query.filter_by(username=current_user.username).first().is_admin):
         return redirect(url_for('login',next='/admin_users'))
     
     users = User.query.all()
@@ -471,7 +475,7 @@ def update_admin_users():
 
 @app.route('/admin_hospitals', methods=['GET', 'POST'])
 def admin_hospitals():
-    if not current_user.is_authenticated:
+    if (not current_user.is_authenticated) or (not User.query.filter_by(username=current_user.username).first().is_admin):
         return redirect(url_for('login',next='/admin_hospitals'))
 
     hospitals = Hospital.query.all()
@@ -533,7 +537,7 @@ def update_admin_hospital():
 
 @app.route('/admin_exchange', methods=['GET', 'POST'])
 def admin_exchange():
-    if not current_user.is_authenticated:
+    if (not current_user.is_authenticated) or (not User.query.filter_by(username=current_user.username).first().is_admin):
         return redirect(url_for('login',next='/admin_exchange'))
     
     exchanges = Exchanges.query.order_by(desc(Exchanges.updated_timestamp)).all()
