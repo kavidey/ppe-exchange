@@ -26,6 +26,9 @@ After creating an EC2 instance of OS type Amazon Linux, ssh into it using the ge
 `sudo apt-get install python3-venv -y`
 `sudo apt install virtualenv -y`
 
+#### Set the correct timezone
+https://stackoverflow.com/questions/34394279/how-to-set-aws-amazon-server-time-cant-find-etc-sysconfig-clock-file
+
 ## Setup nginx [guide] (https://chrisdtran.com/2017/deploy-flask-on-ec2/)
 #### Delete default nginx server
 `sudo rm /etc/nginx/sites-enabled/default`
