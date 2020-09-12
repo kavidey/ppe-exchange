@@ -376,7 +376,7 @@ def change_password():
             user.password_reset_key = ""
             db.session.commit()
             flash('Password succesfully updated')
-            return redirect(url_for('logout'))
+            return redirect(url_for('login'))
         return render_template('change_password.html', title='Change Password', form=form)
     else:
         return render_template('404.html')
@@ -392,7 +392,7 @@ def reset_password():
         
         email.send_reset_password(app.config.get("PPE_HOSTNAME"), user.email, key, user.username)
         flash('You should recieve an email with instructions on how to reset your password soon')
-        return redirect(url_for('logout'))
+        return redirect(url_for('login'))
     return render_template('reset_password.html', title='Reset Password', form=form)
 
 @app.route('/admin_users', methods=['GET', 'POST'])
@@ -833,6 +833,9 @@ def update_exchange():
 
 @app.route('/admin_create_exchange', methods=['GET', 'POST'])
 def admin_create_exchange():
+    if (not current_user.is_authenticated) or (not User.query.filter_by(username=current_user.username).first().is_admin):
+        return redirect(url_for('login',next='/admin_exchange'))
+
     positive_credits_exchange = None
 
     # First Pass of the Exchange Algorithm
