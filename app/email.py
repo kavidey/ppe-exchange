@@ -155,7 +155,7 @@ def send_hospital_hospital_canceled(username, hostname, email, exchange_id):
 def send_reset_password(hostname, email, auth_key, username):
     url = "http://" + hostname + "/change_password?key="+auth_key
 
-    msg = Message(subject="PPE Exchange Admin Setup",
+    msg = Message(subject="PPE Exchange Password Reset",
                     sender=app.config.get("MAIL_USERNAME"),
                     recipients=[email],
                     body="Click this link to set the admin password for PPE Exchange \n"+url,

@@ -185,9 +185,7 @@ def verify():
         return redirect(url_for('login',next='/verify?key='+request.args.get("key")))
 
     user = User.query.filter_by(username=current_user.username).first()
-    print(user, request.args.get("key"), user.verification_key)
     if request.args.get("key") == user.verification_key and user.verification_key != "":
-        print("verifying user")
         form = VerifyForm()
         if form.validate_on_submit():
             # Mark user as verified
@@ -202,10 +200,8 @@ def verify():
             return redirect(url_for('index'))
         return render_template('verify.html', title='Verify', form=form)
     elif user.is_verified:
-        print("user is already verified")
         return redirect(url_for("index"))
     else:
-        print("invalid something")
         return render_template('404.html')
 
 @app.route('/wants', methods=['GET', 'POST'])
@@ -380,7 +376,7 @@ def change_password():
             user.password_reset_key = ""
             db.session.commit()
             flash('Password succesfully updated')
-            return redirect(url_for('login'))
+            return redirect(url_for('logout'))
         return render_template('change_password.html', title='Change Password', form=form)
     else:
         return render_template('404.html')
@@ -396,7 +392,7 @@ def reset_password():
         
         email.send_reset_password(app.config.get("PPE_HOSTNAME"), user.email, key, user.username)
         flash('You should recieve an email with instructions on how to reset your password soon')
-        return redirect(url_for('login'))
+        return redirect(url_for('logout'))
     return render_template('reset_password.html', title='Reset Password', form=form)
 
 @app.route('/admin_users', methods=['GET', 'POST'])
