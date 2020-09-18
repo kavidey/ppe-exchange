@@ -15,6 +15,13 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField('Remember Me')
     submit = SubmitField('Sign In')
 
+class EditUserProfileForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    contact = StringField('Phone Number', validators=[DataRequired()])
+
+    submit = SubmitField('Save')
+
 class VerifyForm(FlaskForm):
     submit = SubmitField('Verify')
     
