@@ -28,9 +28,16 @@
                 <span style="color: red;">[{{ error }}]</span>
                 {% endfor %}
             </p>
-            
+
             <p>{{ form.submit(class_="btn btn-primary") }}</p>
+
         </form>
+
+        <p>
+            <a class = "btn btn-success" href="{{ url_for('change_password') }}">Change Password</a>
+            
+           
+        </p>
        
     </div>
 </div>

@@ -384,18 +384,31 @@ def update_admin_sku():
 
 @app.route('/change_password', methods=['GET', 'POST'])
 def change_password():
-    user = User.query.filter_by(password_reset_key=request.args.get("key")).first()
-    if user is not None and request.args.get("key") != "":
-        form  = ChangePassword()
+    form  = ChangePassword()
+    if current_user.is_authenticated:
+        user = User.query.filter_by(username=current_user.username).first()
         if form.validate_on_submit():
             user.set_password(form.password.data)
             user.password_reset_key = ""
             db.session.commit()
             flash('Password succesfully updated')
-            return redirect(url_for('login'))
+            return redirect(url_for('index'))
         return render_template('change_password.html', title='Change Password', form=form)
+        
     else:
-        return render_template('404.html')
+        user = User.query.filter_by(password_reset_key=request.args.get("key")).first()
+        
+        if user is not None and request.args.get("key") != "":
+            
+            if form.validate_on_submit():
+                user.set_password(form.password.data)
+                user.password_reset_key = ""
+                db.session.commit()
+                flash('Password succesfully updated')
+                return redirect(url_for('login'))
+            return render_template('change_password.html', title='Change Password', form=form)
+        else:
+            return render_template('404.html')
 
 @app.route('/reset_password', methods=['GET', 'POST'])
 def reset_password():
