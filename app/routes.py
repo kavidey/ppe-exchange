@@ -874,9 +874,9 @@ def admin_create_exchange():
     hospitals = Hospital.query.order_by(desc(Hospital.credit))
 
     for h in hospitals:
-        # We ignore any hospitals who don't have a positve amount of credits in this algorithm pass
+        # We ignore any hospitals who don't have a positive amount of credits in this algorithm pass
         if h.credit <= 0:
-            break
+            continue
         # get all the wants for this hospital
         hws = Wants.query.filter_by(hospital_id=h.id)
         # iterate through hospital wants looking at each ppe wanted
@@ -955,6 +955,7 @@ def admin_create_exchange():
 
         # Calculate the total amount of haves and wants for this SKU
         # * This used to figure out whether it is possible to create an exchange or not
+        #### TODO: need to add code to only add to total_wants if you have PPE to give - not used, so can delete
         have_total = 0
         want_total = 0
         for have in haves:
