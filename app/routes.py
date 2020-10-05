@@ -645,14 +645,23 @@ def update_admin_exchanges():
         exchange = Exchange.query.filter_by(exchange_id=int(data["exchange_id"]))
         for x in exchange:
             x.status=EXCHANGE_ADMIN_CANCELED
+            
             # undo has and wants
             transfer = x.count
             has = Has.query.filter_by(hospital_id=x.hospital1)\
                 .filter_by(ppe_id=x.ppe).first()
-            has.count += transfer
+            if has:
+                has.count += transfer
+            else:
+                has = Has(hospital_id=x.hospital1, ppe_id=x.ppe, count=transfer)
+                db.session.add(has)
             wants = Wants.query.filter_by(hospital_id=x.hospital2)\
                 .filter_by(ppe_id=x.ppe).first()
-            wants.count += transfer
+            if wants:
+                wants.count += transfer
+            else:
+                wants = Wants(hospital_id=x.hospital2, ppe_id=x.ppe, count=transfer)
+                db.session.add(wants)
 
             # undo credit transfers
             tx = Hospital.query.filter_by(id=x.hospital1).first()
@@ -660,7 +669,7 @@ def update_admin_exchanges():
 
             rx = Hospital.query.filter_by(id=x.hospital2).first()
             rx.credit += transfer
-        db.session.commit()
+            db.session.commit()
     elif data["task"] == "verify":
         q = db.session.query(Exchanges)
         q = q.filter(Exchanges.id==(int(data["exchange_id"])))
