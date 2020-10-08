@@ -36,6 +36,9 @@ https://stackoverflow.com/questions/34394279/how-to-set-aws-amazon-server-time-c
 #### Create a symlink for the server config file
 `sudo ln -s ~/ppe-exchange/example.com /etc/nginx/sites-enabled/example.com`
 
+#### Create a symlink for the 502 error page
+`sudo ln -s  ~/ppe-exchange/500.html /var/www/html/502.html`
+
 #### Copy the SSL Certificate and Key on to the server using scp
 
 #### Update the example.com file with the correct domain name and SSL Certificate and Key locations
