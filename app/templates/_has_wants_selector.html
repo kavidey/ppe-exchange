@@ -3,9 +3,8 @@
 <td>{{ ppe.sku }}</td>
 <td>{{ ppe.manu }}</td>
 <td>{{ ppe.desc }}</td>
-<td>
-    {{ caller() }}
-</td>
+<td>{{ ppe.box_size }}</td>
+{{ caller() }}
 {% endmacro %}
 
 {% macro active_ppe_row(ppe) %}
@@ -18,11 +17,19 @@
     {% set count = 0 %}
 {% endif %}
 {% call ppe_row(ppe) %}
-<span class="no-edit">{{ count }}</span>
-<input class="form-control" id="ppe-quantity-{{ppe.id}}" name="ppe-{{ppe.id}}" type="number" min="0" max="999999999" step="1" value="{{count}}" />
-<button class="btn btn-danger only-edit" onclick="document.getElementById('ppe-quantity-{{ppe.id}}').value = '0'; $(this).parent().parent().hide(); return false">
-    <i class="glyphicon glyphicon-remove"></i> Delete
-</button>
+<td>
+    <span class="no-edit">{{ count }}</span>
+    <input class="form-control" id="ppe-quantity-{{ppe.id}}" name="ppe-{{ppe.id}}" type="number" min="0" max="999999999" step="1" value="{{count}}" onchange="document.getElementById('ppe-total-quantity-{{ppe.id}}').innerHTML = document.getElementById('ppe-quantity-{{ppe.id}}').value * {{ppe.box_size}}; return false"/>
+</td>
+<td>
+    <span class="no-edit">{{ count * ppe.box_size }}</span>
+    <span class="only-edit" id="ppe-total-quantity-{{ppe.id}}">{{ count * ppe.box_size }}</span>
+</td>
+<td>
+    <button class="btn btn-danger only-edit" onclick="document.getElementById('ppe-quantity-{{ppe.id}}').value = '0'; $(this).parent().parent().hide(); return false">
+        <i class="glyphicon glyphicon-remove"></i> Delete
+    </button>
+</td>
 {% endcall %}
 {% endmacro %}
 
@@ -41,7 +48,10 @@
                     <th>SKU</th>
                     <th>Manufacturer</th>
                     <th>Description</th>
-                    <th>Quantity Wanted</th>
+                    <th>Box Size</th>
+                    <th>Boxes Wanted</th>
+                    <th>PPE Wanted</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -117,9 +127,7 @@
                                     JS reads it.
                                 -->
                                 <script type="text/html" id="ppe-row-template-{{ppe.id}}">
-                                    <tr>
                                     {{ active_ppe_row(ppe) }}
-                                    </tr>
                                 </script>
                             {% endif %}
                         {% endcall %}

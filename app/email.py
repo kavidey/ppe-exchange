@@ -27,7 +27,7 @@ def send_hospital_exchange_creation(username, hostname, email, exchange_id):
 
 def send_hospital_exchange_verified_ship_address(username, hostname, email, exchange_id, count, sku, address, recv_hospital):
     url = "http://"+hostname + "/exchanges"
-    text1=f"All parties have verified participation in exchange #{exchange_id}. Please ship {count} of SKU {sku} to {recv_hospital}. Their address is:"
+    text1=f"All parties have verified participation in exchange #{exchange_id}. Please ship {count} boxes of SKU {sku} to {recv_hospital}. Their address is:"
     text2="to indicate shipping of PPE."
     msg = Message(subject="PPE Exchange - Ready to Ship",
                     sender=app.config.get("MAIL_USERNAME"),
@@ -86,7 +86,7 @@ def send_hospital_exchange_own_shipped(username, hostname, email, exchange_id):
 
 def send_hospital_exchange_partner_shipped(username, hostname, email, exchange_id, name, count, ppe):
     url = "http://"+hostname + "/index"
-    text1="As part of PPE exchange #" + exchange_id + " " + name + " has shipped " + str(count) + " units of PPE type " + ppe+ " to your hospital."
+    text1="As part of PPE exchange #" + exchange_id + " " + name + " has shipped " + str(count) + " boxes of PPE type " + ppe+ " to your hospital."
     text2="once the shipment has arrived to confirm your receipt of the exchange shipment."
     msg = Message(subject="PPE Exchange - Exchange Partner Shipped",
                     sender=app.config.get("MAIL_USERNAME"),
@@ -109,7 +109,7 @@ def send_hospital_exchange_own_received(username, hostname, email, exchange_id):
 
 def send_hospital_exchange_partner_received(username, hostname, email, exchange_id, name, count, ppe):
     url = "http://"+hostname + "/index"
-    text1="As part of PPE exchange #" + exchange_id + " " + name + " has received " + str(count) + " units of PPE type " + ppe+ " from your hospital."
+    text1="As part of PPE exchange #" + exchange_id + " " + name + " has received " + str(count) + " boxes of PPE type " + ppe+ " from your hospital."
     text2="if you want to confirm these details."
     msg = Message(subject="PPE Exchange - Exchange Partner Received",
                     sender=app.config.get("MAIL_USERNAME"),

@@ -350,6 +350,7 @@ def admin_sku():
             "sku": item.sku,
             "desc": item.desc,
             "manufacturer": item.manu,
+            "box_size": item.box_size,
             "img": item.img.decode(),
             "haves": ha,
             "wants": wa
@@ -366,7 +367,7 @@ def update_admin_sku():
         if q.count() > 0:
             return "SKU already exists"
         else:
-            p = PPE(sku=data["sku"], desc=data["desc"], img=str.encode(data["img"]), manu=data["manu"])
+            p = PPE(sku=data["sku"], desc=data["desc"], img=str.encode(data["img"]), manu=data["manu"], box_size=data["box_size"])
             db.session.add(p)
             db.session.commit()
     elif data["task"] == "remove":
@@ -377,6 +378,7 @@ def update_admin_sku():
         q = q.filter(PPE.sku == data["sku"])
         record = q.first()
         record.desc = data["desc"]
+        record.box_size = data["box_size"]
         record.img = str.encode(data["img"])
         record.manu = data["manu"]
         db.session.commit()
