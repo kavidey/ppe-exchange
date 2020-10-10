@@ -4,3 +4,4 @@ venv/
 app.db
 ppe-exchangewa.pem
 config.yaml
+*.DS_Store
