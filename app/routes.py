@@ -371,6 +371,7 @@ def admin_sku():
             "sku": item.sku,
             "desc": item.desc,
             "manufacturer": item.manu,
+            "box_size": item.box_size,
             "img": item.img.decode(),
             "haves": ha,
             "wants": wa
@@ -387,7 +388,7 @@ def update_admin_sku():
         if q.count() > 0:
             return "SKU already exists"
         else:
-            p = PPE(sku=data["sku"], desc=data["desc"], img=str.encode(data["img"]), manu=data["manu"])
+            p = PPE(sku=data["sku"], desc=data["desc"], img=str.encode(data["img"]), manu=data["manu"], box_size=data["box_size"])
             db.session.add(p)
             db.session.commit()
     elif data["task"] == "remove":
@@ -398,6 +399,7 @@ def update_admin_sku():
         q = q.filter(PPE.sku == data["sku"])
         record = q.first()
         record.desc = data["desc"]
+        record.box_size = data["box_size"]
         record.img = str.encode(data["img"])
         record.manu = data["manu"]
         db.session.commit()
@@ -666,14 +668,23 @@ def update_admin_exchanges():
         exchange = Exchange.query.filter_by(exchange_id=int(data["exchange_id"]))
         for x in exchange:
             x.status=EXCHANGE_ADMIN_CANCELED
+            
             # undo has and wants
             transfer = x.count
             has = Has.query.filter_by(hospital_id=x.hospital1)\
                 .filter_by(ppe_id=x.ppe).first()
-            has.count += transfer
+            if has:
+                has.count += transfer
+            else:
+                has = Has(hospital_id=x.hospital1, ppe_id=x.ppe, count=transfer)
+                db.session.add(has)
             wants = Wants.query.filter_by(hospital_id=x.hospital2)\
                 .filter_by(ppe_id=x.ppe).first()
-            wants.count += transfer
+            if wants:
+                wants.count += transfer
+            else:
+                wants = Wants(hospital_id=x.hospital2, ppe_id=x.ppe, count=transfer)
+                db.session.add(wants)
 
             # undo credit transfers
             tx = Hospital.query.filter_by(id=x.hospital1).first()
@@ -681,7 +692,7 @@ def update_admin_exchanges():
 
             rx = Hospital.query.filter_by(id=x.hospital2).first()
             rx.credit += transfer
-        db.session.commit()
+            db.session.commit()
     elif data["task"] == "verify":
         q = db.session.query(Exchanges)
         q = q.filter(Exchanges.id==(int(data["exchange_id"])))
@@ -895,9 +906,9 @@ def admin_create_exchange():
     hospitals = Hospital.query.order_by(desc(Hospital.credit))
 
     for h in hospitals:
-        # We ignore any hospitals who don't have a positve amount of credits in this algorithm pass
+        # We ignore any hospitals who don't have a positive amount of credits in this algorithm pass
         if h.credit <= 0:
-            break
+            continue
         # get all the wants for this hospital
         hws = Wants.query.filter_by(hospital_id=h.id)
         # iterate through hospital wants looking at each ppe wanted
@@ -976,6 +987,7 @@ def admin_create_exchange():
 
         # Calculate the total amount of haves and wants for this SKU
         # * This used to figure out whether it is possible to create an exchange or not
+        #### TODO: need to add code to only add to total_wants if you have PPE to give - not used, so can delete
         have_total = 0
         want_total = 0
         for have in haves:

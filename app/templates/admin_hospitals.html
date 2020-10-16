@@ -62,10 +62,10 @@
                     <td>{{ item.address }}</td>
                     <td>
                         {% for h in item.haves %}
-                            Has {{ h.count}} units of <a href="#" data-toggle="tooltip" title="<p>{{ h.tooltip }}</p><img style='width: 100%;'src='{{ h.img }}'/>">{{ h.ppe }}</a><br>
+                            Has {{ h.count}} boxes of <a href="#" data-toggle="tooltip" title="<p>{{ h.tooltip }}</p><img style='width: 100%;'src='{{ h.img }}'/>">{{ h.ppe }}</a><br>
                         {% endfor %}
                         {% for w in item.wants %}
-                            Wants {{ w.count}} units of <a href="#" data-toggle="tooltip" title="<p>{{ w.tooltip }}</p><img style='width: 100%;'src='{{ w.img }}'/>">{{ w.ppe }}</a><br>
+                            Wants {{ w.count}} boxes of <a href="#" data-toggle="tooltip" title="<p>{{ w.tooltip }}</p><img style='width: 100%;'src='{{ w.img }}'/>">{{ w.ppe }}</a><br>
                         {% endfor %}
                     </td>
                     <td>{{ item.credit }} </td>
