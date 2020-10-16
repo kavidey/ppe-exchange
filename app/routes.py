@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug import secure_filename
 from app import app, db, crypto, email
-from app.forms import LoginForm, RegistrationForm, VerifyForm, ChangePassword, ResetPassword, EditUserProfileForm
+from app.forms import LoginForm, RegistrationForm, VerifyForm, ChangePassword, ResetPassword, EditUserProfileForm, EditHospitalProfileForm
 from app.models import User, PPE, Hospital, Wants, Has, Exchanges, Exchange, EXCHANGE_COMPLETE, EXCHANGE_COMPLETE_TEXT, EXCHANGE_COMPLETE_ADMIN, EXCHANGE_COMPLETE_ADMIN_TEXT, EXCHANGE_COMPLETE_HOSPITAL_CANCELED, EXCHANGE_COMPLETE_HOSPITAL_CANCELED_TEXT, EXCHANGE_COMPLETE_ADMIN_CANCELED, EXCHANGE_COMPLETE_ADMIN_CANCELED_TEXT, EXCHANGE_UNVERIFIED, EXCHANGE_UNVERIFIED_TEXT, EXCHANGE_IN_PROGRESS, EXCHANGE_IN_PROGRESS_TEXT, EXCHANGE_NOT_ACCEPTED, EXCHANGE_ACCEPTED_NOT_SHIPPED, EXCHANGE_ACCEPTED_SHIPPED, EXCHANGE_ACCEPTED_RECEIVED, EXCHANGE_HOSPITAL_CANCELED, EXCHANGE_ADMIN_CANCELED, EXCHANGE_ADMIN_NOT_VERIFIED
 from app import crypto
 from app import email
@@ -195,10 +195,31 @@ def edit_user_profile():
         return redirect(url_for('index'))
     return render_template('edit_user_profile.html', title='Edit User Profile', form=form, current_user=current_user)
 
+@app.route('/edit_hospital_profile', methods=['GET', 'POST'])
+def edit_hospital_profile():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    form = EditHospitalProfileForm()
+    hospital = Hospital.query.filter_by(id=current_user.hospital_id).first()
+    
+    if form.validate_on_submit():
+          
+        hospital.street=form.street.data
+        hospital.city=form.city.data
+        hospital.state=form.state.data
+        hospital.zipcode=form.zipcode.data
+        
+
+        db.session.commit()
+        return redirect(url_for('index'))
+    form.state.data = hospital.state
+    return render_template('edit_hospital_profile.html', title='Edit Hospital Profile', form=form, hospital=hospital)
+
 @app.route('/verify', methods=['GET', 'POST'])
 def verify():
     if not current_user.is_authenticated:
         return redirect(url_for('login',next='/verify?key='+request.args.get("key")))
+        
 
     user = User.query.filter_by(username=current_user.username).first()
     if request.args.get("key") == user.verification_key and user.verification_key != "":

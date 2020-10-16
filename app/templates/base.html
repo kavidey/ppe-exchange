@@ -7,8 +7,9 @@
   src="https://code.jquery.com/jquery-3.4.1.js"
   integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
   crossorigin="anonymous"></script>
-  <link rel="stylesheet"
-      href="{{url_for('.static', filename='style.css')}}">
+
+<link rel="stylesheet"href="{{url_for('.static', filename='style.css')}}">
+
 {% endblock %}
 
 {% block html_attribs %} lang="en"{% endblock %}
@@ -18,44 +19,38 @@
 {% endblock %}
 
 {% block navbar %}
-<nav class="navbar navbar-default" role="navigation">
-  <div class="navbar-header">
-    <a class="navbar-brand" href="{{ url_for('index') }}">PPE-Exchange</a>
-  </div>
-  <div>
-    <ul class="nav navbar-nav nav-pills">
-    	<li class="nav-itm">
-	      <a class="nav-link" href="{{ url_for('index') }}">Home</a>
-      </li>
-      
 
-        {% if current_user.is_anonymous %}
-        <li class="nav-item">
-          <a class="nav-link" href="/login">Login</a>
+<nav class="navbar navbar-default" style="user-select: auto;">
+  <div class="container-fluid" style="user-select: auto;">
+    <div class="navbar-header" style="user-select: auto;">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar" style="user-select: auto;">
+        <span class="sr-only" style="user-select: auto;">Toggle navigation</span>
+        <span class="icon-bar" style="user-select: auto;"></span>
+        <span class="icon-bar" style="user-select: auto;"></span>
+        <span class="icon-bar" style="user-select: auto;"></span>
+      </button>
+      <a class="navbar-brand" href="{{ url_for('index') }}" style="user-select: auto;">PPE-Exchange</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse" style="user-select: auto;">
+      <ul class="nav navbar-nav" style="user-select: auto;">
+        <li class="active" style="user-select: auto;"><a href="{{ url_for('index') }}" style="user-select: auto; ">Home</a></li>
+        
+      </ul>
+      <ul class="nav navbar-nav navbar-right" style="user-select: auto;">
+        <li class="dropdown" style="user-select: auto;">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="user-select: auto;">Edit Profile <span class="caret" style="user-select: auto;"></span></a>
+          <ul class="dropdown-menu" style="user-select: auto;">
+            <li style="user-select: auto;"><a href="{{ url_for('edit_user_profile') }}" style="user-select: auto;">Edit User Profile</a></li>
+            <li style="user-select: auto;"><a href="{{ url_for('edit_hospital_profile') }}" style="user-select: auto;">Edit Hospital Profile</a></li>
+            
+          </ul>
         </li>
-        {% else %}
-        <li class="nav-itm">
-          <a class="navbar-link" href="{{ url_for('edit_user_profile') }}">Edit User Profile</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/logout">Logout</a>
-        </li>
-        {% endif %}
-    </ul>
-  </div>
+        <li style="user-select: auto;"><a href="/logout" style="user-select: auto;">Logout</a></li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container-fluid -->
 </nav>
-{% endblock %}
 
-{% block content %}
-<div class="container">
-  {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for message in messages %}
-           <div class="alert alert-info" role="alert">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-</div>
 
 {% block app_content %}
 {% endblock %}

@@ -38,17 +38,12 @@ class RegistrationForm(FlaskForm):
     state = SelectField('State', choices=[(state, state) for state in STATE_ABBREV], default="WA")
     zipcode = StringField('Zipcode', validators=[DataRequired()])
     submit = SubmitField('Register')
-
-
-    def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
-        if user is not None:
-            raise ValidationError('Please use a different username.')
-
-    def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user is not None:
-            raise ValidationError('Please use a different email address.')
+class EditHospitalProfileForm(FlaskForm):
+    street = StringField('Street Address', validators=[DataRequired()])
+    city = StringField('City', validators=[DataRequired()])
+    state = SelectField('State', choices=[(state, state) for state in STATE_ABBREV], default="WA")
+    zipcode = StringField('Zipcode', validators=[DataRequired()])
+    submit = SubmitField('Save')
 
 
 class ResetPassword(FlaskForm):

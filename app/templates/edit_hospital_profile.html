@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="content">
+    <h1>Edit Hospital Profile</h1>
+    <div>
+        <form action="" method="post" novalidate>
+            {{ form.hidden_tag() }}
+            
+            
+            <p>
+                {{ form.street.label}}<br>
+                {{ form.street(size=64, class_="form-control", value=hospital.street) }}<br>
+                {% for error in form.street.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.city.label }}<br>
+                {{ form.city(size=64, class_="form-control", value=hospital.city) }}<br>
+                {% for error in form.city.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.state.label }}<br>
+                {{ form.state(class_="form-control", value=hospital.state) }}<br>
+                {% for error in form.state.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.zipcode.label }}<br>
+                {{ form.zipcode(size=64, class_="form-control", value=hospital.zipcode) }}<br>
+                {% for error in form.zipcode.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>{{ form.submit(class_="btn btn-primary") }}</p>
+
+        </form>
+
+        
+    </div>
+</div>
+{% endblock %}
