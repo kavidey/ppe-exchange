@@ -1,0 +1,179 @@
+{% block packing_slip %}
+<style>
+    .center-text {
+        text-align: center
+    }
+
+    .right-text {
+        text-align: right;
+    }
+
+    .uppercase-text {
+        text-transform: uppercase
+    }
+
+    .top-text {
+        vertical-align: top;
+    }
+
+    .bottom-text {
+        vertical-align: bottom;
+    }
+
+    .brown-bg {
+        background: #daddcc;
+    }
+
+    .brown-border {
+        border: 2px solid #c0c0be;
+    }
+
+    .fancy-border {
+        border: 3px solid #daddcc;
+        outline: 3px solid #c0c0be;
+        margin-top: 3px;
+    }
+
+    .sans-serif-text {
+        font-family: 'Mulish', sans-serif;
+    }
+
+    .serif-text {
+        font-family: 'Lora', serif;
+    }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Lora&family=Mulish:wght@500&display=swap" rel="stylesheet">
+
+<div class="container mt-3 sans-serif-text">
+    <div class="text-center fancy-border p-3" style="width: 657px; padding-left: 15px; padding-right: 15px">
+        <!-- original width is 627 px, add to that right and left padding to get the correct width-->
+        <table border="0"
+            summary="Enter Ship To Company Name and contact details, Bill To Company Name and contact details in first table. Enter Order details in second table"
+            width="624" cellspacing="0" cellpadding="0">
+            <tbody>
+                <tr>
+                    <td width="396" class="bottom-text">
+                        <h1 class="uppercase-text serif-text">PACKING SLIP</h1>
+                    </td>
+                    <td width="228" class="bottom-text">
+                        <p class="right-text">PURCHASE ORDER: {{ packing_slip_info['info']['swap_id'] }} <br>
+                            EXCHANGE DATE: {{ packing_slip_info['info']['date'] }} </p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <br>
+        <br>
+        <table border="0"
+            summary="Enter Ship To Company Name and contact details, Bill To Company Name and contact details in first table. Enter Order details in second table"
+            width="624" cellspacing="0" cellpadding="0">
+            <tbody>
+                <tr>
+                    <td class="top-text">
+                        <p>SHIP TO:</p>
+                    </td>
+                    <td class="top-text">
+                        <p class="right-text">
+                            <strong>ATTN: Receiving Warehouse</strong> <br>
+                            {{ packing_slip_info['recieving']['name'] }} <br>
+                            {{ packing_slip_info['recieving']['street'] }} <br>
+                            {{ packing_slip_info['recieving']['city'] }}, {{ packing_slip_info['recieving']['state'] }} {{ packing_slip_info['recieving']['zip'] }} <br>
+                            {{ packing_slip_info['recieving']['email'] }} <br>
+                            Customer ID: {{ packing_slip_info['recieving']['id'] }} <br>
+                        </p>
+                    </td>
+                    <td class="top-text">
+                        <p>&nbsp;&nbsp;&nbsp;&nbsp;FROM:</p>
+                    </td>
+                    <td class="top-text">
+                        <p class="right-text">
+                            <strong>N95 PPE-Exchange</strong> <br>
+                            {{ packing_slip_info['sending']['name'] }} <br>
+                            {{ packing_slip_info['sending']['street'] }} <br>
+                            {{ packing_slip_info['sending']['city'] }}, {{ packing_slip_info['sending']['state'] }} {{ packing_slip_info['sending']['zip'] }}
+                        </p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <p></p>
+        <table class="brown-border"
+            summary="Enter Ship To Company Name and contact details, Bill To Company Name and contact details in first table. Enter Order details in second table"
+            width="624" cellspacing="0" cellpadding="0">
+            <tbody>
+                <tr class="brown-bg brown-border">
+                    <td width="624">
+                        <p class="uppercase-text center-text"><strong>INSTRUCTIONS FOR WAREHOUSE:</strong></p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="624" class="brown-border">
+                        <p class="center-text">Send packing slip to email address in &ldquo;Ship To&rdquo; address
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="624" class="center-text brown-border">
+                        <p>Please store N95 Masks in warehouse and adjust quantities received</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <br>
+        <table class="brown-border"
+            summary="Layout table to enter Item, Description and Quantity, Company Slogan, Customer Service number, and Comments"
+            width="624" cellspacing="0" cellpadding="0">
+            <tbody>
+                <tr class="brown-bg">
+                    <td width="98" class="brown-border">
+                        <p class="center-text uppercase-text">MODEL #</p>
+                    </td>
+                    <td width="426" class="brown-border">
+                        <p class="center-text uppercase-text">MANUFACTURER</p>
+                    </td>
+                    <td width="100" class="brown-border">
+                        <p class="center-text uppercase-text">QUANTITY</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="98" class="brown-border">
+                        {{ packing_slip_info['swap']['sku'] }}
+                    </td>
+                    <td width="426" class="brown-border">
+                        {{ packing_slip_info['swap']['manu'] }}
+                    </td>
+                    <td width="100" class="brown-border">
+                        {{ packing_slip_info['swap']['count'] }}
+                    </td>
+                </tr>
+                <tr>
+                    <td width="98" class="brown-border">
+                        &nbsp;
+                    </td>
+                    <td width="426" class="brown-border">
+                        &nbsp;
+                    </td>
+                    <td width="100" class="brown-border">
+                        &nbsp;
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <table border="0"
+            summary="Layout table to enter Item, Description and Quantity, Company Slogan, Customer Service number, and Comments"
+            width="625" cellspacing="0" cellpadding="0">
+            <tbody>
+                <tr>
+                    <td width="625">
+                        <br>
+                        <p class="right-text">Please contact Shirley Sibal at <a
+                                href="mailto:sosibal@multicare.org">sosibal@multicare.org</a>
+                            with any questions or comments.</p>
+                        <p class="right-text">Thank You For Participating!</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
