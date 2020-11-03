@@ -3,7 +3,7 @@
 {% block app_content %}
 
 <div class="content">
-	<h1>Hi, {{ user.username }} from {{ user.hospital.name }}!</h1>
+	<h1>Hi, {{ user.username }} from {{ user.hospital.name }}</h1>
 	{% include "_exchanges.html" %}
 	{% block exchanges %}{% endblock %}
 	{% include "_has_wants_selector.html" %}

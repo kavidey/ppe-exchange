@@ -1,16 +1,15 @@
 <p>Hello {{username}},</p>
 
-{% if linking %}
-    <p>{{ text1 }}</p>
-    <address>
-        {{address[0]}}<br>
-        {{address[1]}}, {{address[2]}}, {{address[3]}}<br>
-    </address>
-    <p>Please login to the <a href={{link}}><strong>PPE-exchange site</strong></a>, {{ text2 }}</p>
-{% else %}
-    <p>{{ text1 }} <br> {{ text2 }}\n"</p>
-{% endif %}
-
-<p>-PPE Exchange
-    Please do not respond directly to this e-mail. The originating e-mail account is not monitored.  If you have any questions, please free to contact <a href="mailto:sosibal@multicare.org">sosibal@multicare.org.</a>.
+<p>
+    All parties have verified participation in exchange #{{ exchange_id }}. Please ship {{ packing_slip_info['swap']['count'] }} boxes of SKU {{ packing_slip_info['swap']['sku'] }} to {{ packing_slip_info['recieving']['name'] }} using the custom packing slip is available at <a href="{{ packing_slip_url }}">this link</a>.
 </p>
+<p>
+    Once you have shipped, please login to the <a href="{{ link }}"><strong>PPE-exchange site</strong></a>, to indicate that.
+</p>
+
+<p>
+    -PPE Exchange
+        Please do not respond directly to this e-mail. The originating e-mail account is not monitored.  If you have any questions, please free to contact <a href="mailto:sosibal@multicare.org">sosibal@multicare.org</a>.
+</p>
+
+<br>

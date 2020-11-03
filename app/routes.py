@@ -15,6 +15,8 @@ import json
 import os
 import math
 import inspect
+from datetime import datetime
+import urllib.parse
 
 
 import logging
@@ -182,7 +184,7 @@ def register():
 @app.route('/edit_user_profile', methods=['GET', 'POST'])
 def edit_user_profile():
     if not current_user.is_authenticated:
-        return redirect(url_for('login'))
+        return redirect(url_for('login', next='/edit_user_profile'))
     form = EditUserProfileForm()
     
     if form.validate_on_submit():
@@ -198,7 +200,7 @@ def edit_user_profile():
 @app.route('/edit_hospital_profile', methods=['GET', 'POST'])
 def edit_hospital_profile():
     if not current_user.is_authenticated:
-        return redirect(url_for('login'))
+        return redirect(url_for('login', next='/edit_hospital_profile'))
     form = EditHospitalProfileForm()
     hospital = Hospital.query.filter_by(id=current_user.hospital_id).first()
     
@@ -793,15 +795,38 @@ def update_exchange():
             # 1 is sending 2 is receiving
             for x in xs:
                 shipping_user = User.query.filter_by(hospital_id=x.hospital1).first()
+                shipping_hospital = Hospital.query.filter_by(id=x.hospital1).first()
+
+                receiving_user = User.query.filter_by(hospital_id=x.hospital2).first()
                 receiving_hospital = Hospital.query.filter_by(id=x.hospital2).first()
+
+                swap_ppe = PPE.query.filter_by(id=x.ppe).first()
+                
+                info = {
+                    'info': {'swap_id': x.id, 'date': datetime.strftime(x.create_timestamp, "%m/%d/%Y")},
+                    'recieving': {'name': receiving_hospital.name, 
+                                'street': receiving_hospital.street, 
+                                'city': receiving_hospital.city, 
+                                'state': receiving_hospital.state, 
+                                'zip': receiving_hospital.zipcode, 
+                                'email': receiving_user.email, 
+                                'id': receiving_hospital.id},
+                    'sending': {'name': shipping_hospital.name, 
+                                'street': shipping_hospital.street, 
+                                'city': shipping_hospital.city, 
+                                'state': shipping_hospital.state, 
+                                'zip': shipping_hospital.zipcode},
+                    'swap': {'sku': swap_ppe.sku, 'manu': swap_ppe.manu, 'count': x.count}
+                }
+
+                p_url = urllib.parse.urlencode({'packing_slip_info':info})
+
                 email.send_hospital_exchange_verified_ship_address(shipping_user.username,
                     app.config.get("PPE_HOSTNAME"),
                     shipping_user.email,
                     data["exchange_id"],
-                    x.count,
-                    PPE.query.filter_by(id=x.ppe).first().sku,
-                    [receiving_hospital.street, receiving_hospital.city, receiving_hospital.state, receiving_hospital.zipcode],
-                    receiving_hospital.name)
+                    info,
+                    p_url)
 
         db.session.commit()
 
@@ -1091,3 +1116,8 @@ def admin_create_exchange():
             print("Could not create exchange for ppe:", ppe.sku)
     print("")
     return redirect(url_for('admin_exchange'))
+
+
+@app.route('/packing_slip', methods=['GET', 'POST'])
+def packing_slip():
+    return render_template('packing_slip.html', packing_slip_info=json.loads(request.args.get('packing_slip_info').replace("'", '"')))

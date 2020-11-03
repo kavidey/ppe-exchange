@@ -25,15 +25,14 @@ def send_hospital_exchange_creation(username, hostname, email, exchange_id):
     mail.send(msg)
 
 
-def send_hospital_exchange_verified_ship_address(username, hostname, email, exchange_id, count, sku, address, recv_hospital):
-    url = "http://"+hostname + "/exchanges"
-    text1=f"All parties have verified participation in exchange #{exchange_id}. Please ship {count} boxes of SKU {sku} to {recv_hospital}. Their address is:"
-    text2="to indicate shipping of PPE."
+def send_hospital_exchange_verified_ship_address(username, hostname, email, exchange_id, packing_slip_info, packing_slip_url_param):
+    url = "http://"+hostname + "/index"
+    packing_slip_url = "http://"+ hostname + "/packing_slip?" + packing_slip_url_param
     msg = Message(subject="PPE Exchange - Ready to Ship",
                     sender=app.config.get("MAIL_USERNAME"),
                     recipients=[email],
                     body=" ",
-                    html=render_template("email_ship.html", username=username, link=url, linking=True, address=address, text1=text1, text2=text2))
+                    html=render_template("email_ship.html", username=username, link=url, exchange_id=exchange_id, packing_slip_info=packing_slip_info, packing_slip_url=packing_slip_url))
     mail.send(msg)
 
 # NOT USED

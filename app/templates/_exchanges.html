@@ -53,7 +53,7 @@
                 {% set status = "You need to verify" %}
                 {% set actions %}
                     <button
-                        onclick="updateExchange('{{ ex.id }}', 'verify', '{{ e.id }}', -1, '{{ user.hospital.id }}') "
+                        onclick="updateExchange('{{ ex.id }}', 'verify', '{{ e.id }}', -1, '{{ user.hospital.id }}'); $(this).prop('disabled', true) "
                         type="button" class="btn btn-success btn-sm">Verify</button>
                     <button
                         onclick="deleteCheck('{{ ex.id }}', 'cancel', '{{ e.id }}', -1, '{{ user.hospital.id }}') "
@@ -70,7 +70,7 @@
                 {% set status = "You need to verify" %}
                 {% set actions %}
                     <button
-                        onclick="updateExchange('{{ ex.id }}', 'verify', '{{ e.id }}', -1, '{{ user.hospital.id }}') "
+                        onclick="updateExchange('{{ ex.id }}', 'verify', '{{ e.id }}', -1, '{{ user.hospital.id }}'); $(this).prop('disabled', true) "
                         type="button" class="btn btn-success btn-sm">Verify</button>
                     <button
                         onclick="deleteCheck('{{ ex.id }}', 'cancel', '{{ e.id }}', -1, '{{ user.hospital.id }}') "
@@ -88,7 +88,7 @@
             {% set actions %}
                 <button
                     style="margin-left: 0.25em;"
-                    onclick="updateExchange('{{ ex.id }}', 'shipped', '{{ e.id }}', 1, '{{ user.hospital.id }}') "
+                    onclick="updateExchange('{{ ex.id }}', 'shipped', '{{ e.id }}', 1, '{{ user.hospital.id }}'); $(this).prop('disabled', true) "
                     class="btn btn-success btn-sm"
                 >Mark as Shipped</button>
             {% endset %}
@@ -102,7 +102,7 @@
             {% set status = "Waiting for Receipt" %}
             {% set actions %}
                 <button style="margin-left: 0.25em;"
-                onclick="updateExchange('{{ ex.id }}', 'received', '{{ e.id }}', 2, '{{ user.hospital.id }}') "
+                onclick="updateExchange('{{ ex.id }}', 'received', '{{ e.id }}', 2, '{{ user.hospital.id }}'); $(this).prop('disabled', true) "
                 type="button" class="btn btn-success btn-sm">Mark as Received</button>
             {% endset %}
         {% else %}
@@ -188,7 +188,7 @@
                     {% if ((user.hospital.id == e.hospital1 and not e.is_h1_verified) or (user.hospital.id == e.hospital2 and not e.is_h2_verified)) %}
                         {% call whole_exchange_actions(loop, ex, status="You need to verify") %}
                             <button
-                                onclick="updateExchange('{{ ex.id }}', 'verify', -1, -1, '{{ user.hospital.id }}') "
+                                onclick="updateExchange('{{ ex.id }}', 'verify', -1, -1, '{{ user.hospital.id }}'); $(this).prop('disabled', true) "
                                 type="button" class="btn btn-success btn-sm">Verify</button>
                             <button
                                 onclick="deleteCheck('{{ ex.id }}', 'cancel', -1, -1, '{{ user.hospital.id }}') "
