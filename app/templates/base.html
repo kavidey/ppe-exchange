@@ -43,13 +43,17 @@
       <ul class="nav navbar-nav" style="user-select: auto;">
         <li style="user-select: auto;"><a href="{{ url_for('index') }}" style="user-select: auto; ">Home</a></li>
         
+        
       </ul>
       <ul class="nav navbar-nav navbar-right" style="user-select: auto;">
+        <li style="user-select: auto;"><a href="{{ url_for('hospital_information') }}" style="user-select: auto; ">Hospital Information</a></li>
         <li class="dropdown" style="user-select: auto;">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="user-select: auto;">Edit Profile <span class="caret" style="user-select: auto;"></span></a>
           <ul class="dropdown-menu" style="user-select: auto;">
             <li style="user-select: auto;"><a href="{{ url_for('edit_user_profile') }}" style="user-select: auto;">Edit User Profile</a></li>
             <li style="user-select: auto;"><a href="{{ url_for('edit_hospital_profile') }}" style="user-select: auto;">Edit Hospital Profile</a></li>
+            
+            
             
           </ul>
         </li>

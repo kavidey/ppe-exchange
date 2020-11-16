@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug import secure_filename
 from app import app, db, crypto, email
-from app.forms import LoginForm, RegistrationForm, VerifyForm, ChangePassword, ResetPassword, EditUserProfileForm, EditHospitalProfileForm
+from app.forms import LoginForm, RegistrationForm, VerifyForm, ChangePassword, ResetPassword, EditUserProfileForm, EditHospitalProfileForm,HospitalInformation
 from app.models import User, PPE, Hospital, Wants, Has, Exchanges, Exchange, EXCHANGE_COMPLETE, EXCHANGE_COMPLETE_TEXT, EXCHANGE_COMPLETE_ADMIN, EXCHANGE_COMPLETE_ADMIN_TEXT, EXCHANGE_COMPLETE_HOSPITAL_CANCELED, EXCHANGE_COMPLETE_HOSPITAL_CANCELED_TEXT, EXCHANGE_COMPLETE_ADMIN_CANCELED, EXCHANGE_COMPLETE_ADMIN_CANCELED_TEXT, EXCHANGE_UNVERIFIED, EXCHANGE_UNVERIFIED_TEXT, EXCHANGE_IN_PROGRESS, EXCHANGE_IN_PROGRESS_TEXT, EXCHANGE_NOT_ACCEPTED, EXCHANGE_ACCEPTED_NOT_SHIPPED, EXCHANGE_ACCEPTED_SHIPPED, EXCHANGE_ACCEPTED_RECEIVED, EXCHANGE_HOSPITAL_CANCELED, EXCHANGE_ADMIN_CANCELED, EXCHANGE_ADMIN_NOT_VERIFIED
 from app import crypto
 from app import email
@@ -216,6 +216,22 @@ def edit_hospital_profile():
         return redirect(url_for('index'))
     form.state.data = hospital.state
     return render_template('edit_hospital_profile.html', title='Edit Hospital Profile', form=form, hospital=hospital)
+
+@app.route('/hospital_information', methods=['GET', 'POST'])
+def hospital_information():
+    
+    if not current_user.is_authenticated:
+        return redirect(url_for('login', next='/hospital_information'))
+    
+    form  = HospitalInformation()
+    if form.validate_on_submit():
+        hospitalInformation = Hospital.query.filter_by(id=form.hospitalID.data).first()
+        hospitalUsers = User.query.filter_by(hospital_id=form.hospitalID.data).all()
+        print(hospitalInformation)
+        return render_template('hospital_information.html', title='Hospital ID', form=form, hospitalInformation=hospitalInformation, hospitalUsers=hospitalUsers )
+   
+    
+    return render_template('hospital_information.html', title='Hospital ID', form=form)
 
 @app.route('/verify', methods=['GET', 'POST'])
 def verify():

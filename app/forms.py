@@ -56,6 +56,15 @@ class ResetPassword(FlaskForm):
         if user is None:
             raise ValidationError('No user exists with that email')
 
+class HospitalInformation(FlaskForm):
+    hospitalID = StringField("Enter Hospital ID", validators=[DataRequired()])
+    submit = SubmitField('Search')
+
+    def validate_hospitalID(self, hospitalID):
+        HospitalRow = Hospital.query.filter_by(id=hospitalID.data).first()
+        if HospitalRow is None:
+            raise ValidationError('Invalid ID')
+
 
 class ChangePassword(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
