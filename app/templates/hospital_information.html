@@ -18,30 +18,26 @@
     </form>
     
     
-    <h4>Hospital Address</h4>
+    
     {% if hospitalInformation %}
+    <h4>Hospital Address</h4>
     <p>{{hospitalInformation.name}}
         <br>
         {{hospitalInformation.street}},
         <br>
         {{hospitalInformation.city}}, {{hospitalInformation.state}}, {{hospitalInformation.zipcode}}
         <br>
-
-    </p>
-    {% endif %}
-    <h4>Hospital Users</h4>
-    <p>
+        <h4>Hospital Users</h4>
+   
     
-    {% for a in hospitalUsers %}
-        {{a.username}}: {{a.email}}
-        <br>
-        
-
+        {% for a in hospitalUsers %}
+            {{a.username}}: {{a.email}}
+            <br>
     {% endfor%}
     </p>
-
-
     
+    {% endif %}
     
+ 
 </div>
 {% endblock %}
