@@ -126,7 +126,7 @@ class Exchanges(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     created_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     updated_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    status = db.Column(db.Integer,default=EXCHANGE_ADMIN_NOT_VERIFIED)
+    status = db.Column(db.Integer, default=EXCHANGE_ADMIN_NOT_VERIFIED)
     exchange = db.relationship('Exchange', backref='exchanges', passive_deletes=True)
 
     def __repr__(self):

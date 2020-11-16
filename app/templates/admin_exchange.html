@@ -1,120 +1,142 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-    <h1>Exchanges List</h1>
+<h1>Exchanges List</h1>
 
-    <div id="delete-check" class="modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 class="modal-title">Cancel Confirmation</h2>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to cancel Exchange <span id="remove-item-name"></span></p>
-                </div>
-                <div class="modal-footer">
-                    <button id="yes" class="btn btn-danger" onclick="removeExchange()">Yes</button>
-                    <button id="no" class="btn btn-primary"  onclick="hideDeleteCheck()">No</button>
-                </div>	   
+<div id="delete-check" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Cancel Confirmation</h2>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to cancel Exchange <span id="remove-item-name"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button id="yes" class="btn btn-danger" onclick="removeExchange()">Yes</button>
+                <button id="no" class="btn btn-primary" onclick="hideDeleteCheck()">No</button>
             </div>
         </div>
-     </div>
+    </div>
+</div>
 
-    <table class="table table-hover">
-        <thead>
-            <tr>
+<table class="table table-hover">
+    <thead>
+        <tr>
             <th scope="col">ID</th>
             <th scope="col">Created</th>
             <th scope="col">Updated</th>
             <th scope="col">Exchange</th>
             <th scope="col">Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for ex in exchanges %}
-            <tr>
-                <th scope="row">{{ ex.id }}</th>
-                <td>{{ ex.created_timestamp.replace(microsecond=0) }}</td>
-                <td>{{ ex.updated_timestamp.replace(microsecond=0) }}</td>
-                <td>
-                    <table>
-                        {% for e in ex.exchanges %}
-                            <tr>
-                                <td>
-                                    <b>{{ e.h1 }}</b> giving {{ e.count }} boxes of <a href="#" data-toggle="tooltip" title="<p>{{ e.tooltip }}</p><img style='width: 100%;'src='{{ e.img }}'/>">{{ e.ppe }}</a> to <b>{{ e.h2 }}</b>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </table>
-                </td>
-                <td>{{ ex.status_text }}</td>
-                <td>{% if ex.status==0 %}
-                        <button onclick="verifyExchange('{{ ex.id }}', 'verify')" type="button" class="btn btn-success btn-sm">Verify</button>
-                        <button onclick="cancelExchange('{{ ex.id }}', 'cancel_pre_verify')" type="button" class="btn btn-danger btn-sm">Cancel</button>
-                    {% elif ex.status>10 %}
-                        <button onclick="cancelExchange('{{ ex.id }}', 'cancel')" type="button" class="btn btn-danger btn-sm">Cancel</button>
-                    {% else %}
-                        <P></P>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <script>
-        var data = {};
-        $("#delete-check").hide()
+        </tr>
+    </thead>
+    <tbody>
+        {% for ex in exchanges %}
+        <tr>
+            <th scope="row">{{ ex.id }}</th>
+            <td>{{ ex.created_timestamp.replace(microsecond=0) }}</td>
+            <td>{{ ex.updated_timestamp.replace(microsecond=0) }}</td>
+            <td>
+                <table>
+                    {% for e in ex.exchanges %}
+                    <tr>
+                        <td>
+                            <b>{{ e.h1 }}</b> giving {{ e.count }} boxes of <a href="#" data-toggle="tooltip"
+                                title="<p>{{ e.tooltip }}</p><img style='width: 100%;'src='{{ e.img }}'/>">{{ e.ppe }}</a>
+                            to <b>{{ e.h2 }}</b>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </td>
+            <td>
+                <b>{{ ex.status_text }}</b>
+                {% if ex.status == 11%}
+                <table>
+                    {% for hospital in ex.hospital_verification_states %}
+                    <tr>
+                        <td>
+                            {{ hospital }} has 
+                            {% if not ex.hospital_verification_states[hospital] %}
+                            <b>not</b>
+                            {% endif %}
+                            verified
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% endif %}
+            </td>
+            <td>{% if ex.status==0 %}
+                <button onclick="verifyExchange('{{ ex.id }}', 'verify')" type="button"
+                    class="btn btn-success btn-sm">Verify</button>
+                <button onclick="cancelExchange('{{ ex.id }}', 'cancel_pre_verify')" type="button"
+                    class="btn btn-danger btn-sm">Cancel</button>
+                {% elif ex.status>10 %}
+                <button onclick="cancelExchange('{{ ex.id }}', 'cancel')" type="button"
+                    class="btn btn-danger btn-sm">Cancel</button>
+                {% else %}
+                <P></P>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<script>
+    var data = {};
+    $("#delete-check").hide()
 
-        function cancelExchange(exchange_id, task) {
-            data = {exchange_id: exchange_id, task: task};
-            $("#delete-check").show();
-            $("#remove-item-name").text(exchange_id);
-        }
- 
-        function verifyExchange(exchange_id, task) {
-            data = {exchange_id: exchange_id, task: task}
-            $.ajax({
-                url: "/update_admin_exchanges",
-                type: "POST",
-                contentType:'application/json',
-                data: JSON.stringify(data),
-                dataType:'json',
-		        success: function(result) {
-                    location.reload();
-                },
-                error: function(result) {
-                    alert("There was an error please reload and try again");
-                }
-            });
-        }
+    function cancelExchange(exchange_id, task) {
+        data = { exchange_id: exchange_id, task: task };
+        $("#delete-check").show();
+        $("#remove-item-name").text(exchange_id);
+    }
 
-        function removeExchange() {
-            $.ajax({
-                url: "/update_admin_exchanges",
-                type: "POST",
-                contentType:'application/json',
-                data: JSON.stringify(data),
-                dataType:'json',
-		        success: function(result) {
-                    location.reload();
-                },
-                error: function(result) {
-                    alert("There was an error please reload and try again");
-                }
-            });
-        }
-
-        function hideDeleteCheck() {
-            $("#delete-check").hide();
-        }
-
-        // Setup all the bootstrap tooltips
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip({
-                animated: 'fade',
-                html: true
-            });
+    function verifyExchange(exchange_id, task) {
+        data = { exchange_id: exchange_id, task: task }
+        $.ajax({
+            url: "/update_admin_exchanges",
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            dataType: 'json',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (result) {
+                alert("There was an error please reload and try again");
+            }
         });
+    }
 
-    </script>
+    function removeExchange() {
+        $.ajax({
+            url: "/update_admin_exchanges",
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            dataType: 'json',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (result) {
+                alert("There was an error please reload and try again");
+            }
+        });
+    }
+
+    function hideDeleteCheck() {
+        $("#delete-check").hide();
+    }
+
+    // Setup all the bootstrap tooltips
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip({
+            animated: 'fade',
+            html: true
+        });
+    });
+
+</script>
 {% endblock %}

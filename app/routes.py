@@ -627,6 +627,7 @@ def admin_exchange():
         elif ex.status==EXCHANGE_UNVERIFIED:
             stat=EXCHANGE_UNVERIFIED_TEXT
 
+        hospital_verification_states = {}
         for x in exchange:
             ppe = PPE.query.filter_by(id = x.ppe).first()
             i = {
@@ -637,6 +638,16 @@ def admin_exchange():
                 "tooltip": ppe.manu + " " + ppe.desc,
                 "img": ppe.img.decode()
             }
+
+            # Figure out which hospitals have verified, some hospitals are part of multiple swaps, we use dictionary and boolean combination to combine everything
+            if i['h1'] in hospital_verification_states:
+                hospital_verification_states[i['h1']] = hospital_verification_states[i['h1']] and x.is_h1_verified
+            else:
+                hospital_verification_states[i['h1']] = x.is_h1_verified
+            if i['h2'] in hospital_verification_states:
+                hospital_verification_states[i['h2']] = hospital_verification_states[i['h2']] and x.is_h2_verified
+            else:
+                hospital_verification_states[i['h2']] = x.is_h2_verified
             its.append(i)
         item = {
             "id": ex.id,
@@ -644,7 +655,8 @@ def admin_exchange():
             "updated_timestamp": ex.updated_timestamp,
             "exchanges": its,
             "status": ex.status,
-            "status_text": stat
+            "status_text": stat,
+            "hospital_verification_states": hospital_verification_states
         }
         items.append(item)
     return render_template('admin_exchange.html', title='Exchanges Dashboard', exchanges=items)
