@@ -18,7 +18,7 @@ class LoginForm(FlaskForm):
 class EditUserProfileForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
-    contact = StringField('Phone Number', validators=[DataRequired()])
+    contact = StringField('Phone Number')
 
     submit = SubmitField('Save')
 
