@@ -598,6 +598,7 @@ def update_admin_hospital():
         q = q.filter(Hospital.id == data["id"])
         record = q.first()
         record.name = data["name"]
+        record.credit = data["credit"]
         db.session.commit()
     return jsonify(target="index")
 

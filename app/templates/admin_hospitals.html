@@ -1,198 +1,220 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-    <h1>Hospitals</h1>
+<h1>Hospitals</h1>
 
-    <div id="delete-check" class="modal" tabindex="-1" role="dialog">
-       <div class="modal-dialog" role="document">
-	 <div class="modal-content">
-	   <div class="modal-header">
-	     <h2 class="modal-title">Remove Confirmation</h2>
-	   </div>
-	   <div class="modal-body">
-             <p>Are you sure you want to remove hospital: <span id="remove-hospital-name"></span>?</p>
-	   </div>
-	   <div class="modal-footer">
-             <button id="yes" class="btn btn-danger" onclick="removeHospital()">Yes</button>
-	     <button id="no" class="btn btn-primary"  onclick="hideDeleteCheck()">No</button>
-	   </div>	   
-         </div>
-       </div>
-    </div>
-
-    <div id="edit" class="modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 class="modal-title">Edit <span id="edit-hospital-name"></span></h2>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group row padded">
-                        <label class="form-check-label col-sm-2 col-form-label" for="add-name"><b>Name:</b></label>
-                        <div class="col-sm-10">
-                            <input class="form-control" id="edit-name" type="textarea">
-                        </div>
-                    </div>
-                    <br>
-                </div>
-                <div class="modal-footer">
-                        <button id="yes" class="btn btn-primary" onclick="applyEdits()">Apply Edits</button>
-                    <button id="no" class="btn btn-info" onclick="hideEditPage()">Cancel</button>
-                </div>	   
+<div id="delete-check" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Remove Confirmation</h2>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove hospital: <span id="remove-hospital-name"></span>?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="yes" class="btn btn-danger" onclick="removeHospital()">Yes</button>
+                <button id="no" class="btn btn-primary" onclick="hideDeleteCheck()">No</button>
             </div>
         </div>
     </div>
+</div>
 
-    <table class="table table-hover">
-            <thead>
-                <tr>
-                <th scope="col">ID</th>
-                <th scope="col">Name</th>
-                <th scope="col">Address</th>
-                <th scope="col">PPE</th>
-                <th scope="col">Credits</th>
-                <th scope="col">Changes</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <th scope="row">{{ item.id }}</th>
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.address }}</td>
-                    <td>
-                        {% for h in item.haves %}
-                            Has {{ h.count}} boxes of <a href="#" data-toggle="tooltip" title="<p>{{ h.tooltip }}</p><img style='width: 100%;'src='{{ h.img }}'/>">{{ h.ppe }}</a><br>
-                        {% endfor %}
-                        {% for w in item.wants %}
-                            Wants {{ w.count}} boxes of <a href="#" data-toggle="tooltip" title="<p>{{ w.tooltip }}</p><img style='width: 100%;'src='{{ w.img }}'/>">{{ w.ppe }}</a><br>
-                        {% endfor %}
-                    </td>
-                    <td>{{ item.credit }} </td>
-                    <td>
-                            <button class="btn btn-danger" id="remove" onclick="checkRemoveHospital('{{ item.id }}', '{{ item.name }}')">Remove</button>
-                            <button id="edit" class="btn btn-primary" onclick="edit('{{ item.id }}', '{{ item.name }}')">Edit</button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    <br>
-    <div id="add" style="margin-left: 0.75em;">
-        <div class="form-group row padded">
-            <label class="form-check-label col-sm-1 col-form-label" for="add-name"><b>Name:</b></label>
-	        <div class="col-sm-10">
-		        <input class="form-control" id="add-name" type="textarea">
-	        </div>
-            <br style="margin: 0; padding: 0;">
-            <p>&nbsp;<button class="btn btn-success" style="margin-left:  1em; margin-bottom: 0; margin-top: 0;" onclick="addHospital()">Add</button></p>
+<div id="edit" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit <span id="edit-hospital-name"></span></h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row padded">
+                    <label class="form-check-label col-sm-2 col-form-label" for="add-name"><b>Name:</b></label>
+                    <div class="col-sm-10">
+                        <input class="form-control" id="edit-name" type="textarea">
+                    </div>
+                </div>
+                <div class="form-group row padded">
+                    <label class="form-check-label col-sm-2 col-form-label" for="add-name"><b>Credits:</b></label>
+                    <div class="col-sm-10">
+                        <input class="form-control" id="edit-credits" type="number" min="-999999999" max="999999999"
+                            step="1"> <span class="glyphicon glyphicon-question-sign" aria-hidden="true"
+                            data-toggle="tooltip" data-placement="right" title="<i>Hospitals that have a <b>negative</b> number of credits have received more PPE than they have
+                                given.
+                            </i>
+                            <br>
+                            <br>
+                            <i>Hospitals that have a <b>positive</b> number of credits have given more than they have received.
+                            </i>"></span>
+
+                    </div>
+                </div>
+                <br>
+            </div>
+            <div class="modal-footer">
+                <button id="yes" class="btn btn-primary" onclick="applyEdits()">Apply Edits</button>
+                <button id="no" class="btn btn-info" onclick="hideEditPage()">Cancel</button>
+            </div>
         </div>
-        <br>
     </div>
-    <script>
-        var to_remove = "";
-        var to_edit = "";
+</div>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Address</th>
+            <th scope="col">PPE</th>
+            <th scope="col">Credits</th>
+            <th scope="col">Changes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <th scope="row">{{ item.id }}</th>
+            <td>{{ item.name }}</td>
+            <td>{{ item.address }}</td>
+            <td>
+                {% for h in item.haves %}
+                Has {{ h.count}} boxes of <a href="#" data-toggle="tooltip"
+                    title="<p>{{ h.tooltip }}</p><img style='width: 100%;'src='{{ h.img }}'/>">{{ h.ppe }}</a><br>
+                {% endfor %}
+                {% for w in item.wants %}
+                Wants {{ w.count}} boxes of <a href="#" data-toggle="tooltip"
+                    title="<p>{{ w.tooltip }}</p><img style='width: 100%;'src='{{ w.img }}'/>">{{ w.ppe }}</a><br>
+                {% endfor %}
+            </td>
+            <td>{{ item.credit }} </td>
+            <td>
+                <button class="btn btn-danger" id="remove"
+                    onclick="checkRemoveHospital('{{ item.id }}', '{{ item.name }}')">Remove</button>
+                <button id="edit" class="btn btn-primary"
+                    onclick="edit('{{ item.id }}', '{{ item.name }}', {{ item.credit }})">Edit</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<br>
+<div id="add" style="margin-left: 0.75em;">
+    <div class="form-group row padded">
+        <label class="form-check-label col-sm-1 col-form-label" for="add-name"><b>Name:</b></label>
+        <div class="col-sm-10">
+            <input class="form-control" id="add-name" type="textarea">
+        </div>
+        <br style="margin: 0; padding: 0;">
+        <p>&nbsp;<button class="btn btn-success" style="margin-left:  1em; margin-bottom: 0; margin-top: 0;"
+                onclick="addHospital()">Add</button></p>
+    </div>
+    <br>
+</div>
+<script>
+    var to_remove = "";
+    var to_edit = "";
 
 
-        $("#delete-check").hide()
-        $("#edit").hide()
+    $("#delete-check").hide()
+    $("#edit").hide()
 
-        function addHospital() {
-            if ($("#add-name").val() == "") {
-                alert("Empty name");
-                return NaN
+    function addHospital() {
+        if ($("#add-name").val() == "") {
+            alert("Empty name");
+            return NaN
+        }
+
+        item = {
+            "name": $("#add-name").val(),
+            "task": "add"
+        }
+        $.ajax({
+            url: "/update_admin_hospital",
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(item),
+            dataType: 'json',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (result) {
+                alert(result.responseText);
             }
-
-            item = {
-                "name": $("#add-name").val(),
-                "task": "add"
-            }
-            $.ajax({
-                url: "/update_admin_hospital",
-                type: "POST",
-                contentType:'application/json',
-                data: JSON.stringify(item),
-                dataType:'json',
-                success: function(result) {
-                    location.reload();
-                },
-                error: function(result) {
-                    alert(result.responseText);
-                }
-            });
-            image_uploaded = false;
-        }
-
-        function checkRemoveHospital(id, name) {
-            $("#delete-check").show();
-            $("#remove-hospital-name").text(name);
-            to_remove = id;
-        }
-
-        function hideDeleteCheck() {
-            $("#delete-check").hide();
-        }
-
-        function removeHospital() {
-            id = to_remove;
-            item = {
-                "task": "remove",
-                "id": id
-            }
-            $.ajax({
-                url: "/update_admin_hospital",
-                type: "POST",
-                contentType:'application/json',
-                data: JSON.stringify(item),
-                dataType:'json',
-                success: function(result) {
-                    location.reload();
-                },
-                error: function(result) {
-                    alert(result.responseText);
-                }
-            });
-        }
-
-        function applyEdits() {
-            $('#edit').hide();
-            item = {
-                "id": to_edit,
-                "name": $('#edit-name').val(),
-                "task": "edit"
-            };
-            $.ajax({
-                url: "/update_admin_hospital",
-                type: "POST",
-                contentType:'application/json',
-                data: JSON.stringify(item),
-                dataType:'json',
-                success: function(result) {
-                    location.reload();
-                },
-                error: function(result) {
-                    alert(result.responseText);
-                }
-            });
-        }
-
-        function edit(id, name) {
-            to_edit = id;
-            $('#edit-hospital-name').text(name);
-            $('#edit-name').val(name);
-            $('#edit').show();
-        }
-
-        function hideEditPage() {
-            $('#edit').hide();
-        }
-
-        // Setup all the bootstrap tooltips
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip({
-                animated: 'fade',
-                html: true
-            });
         });
-    </script>
+        image_uploaded = false;
+    }
+
+    function checkRemoveHospital(id, name) {
+        $("#delete-check").show();
+        $("#remove-hospital-name").text(name);
+        to_remove = id;
+    }
+
+    function hideDeleteCheck() {
+        $("#delete-check").hide();
+    }
+
+    function removeHospital() {
+        id = to_remove;
+        item = {
+            "task": "remove",
+            "id": id
+        }
+        $.ajax({
+            url: "/update_admin_hospital",
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(item),
+            dataType: 'json',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (result) {
+                alert(result.responseText);
+            }
+        });
+    }
+
+    function applyEdits() {
+        $('#edit').hide();
+        item = {
+            "id": to_edit,
+            "name": $('#edit-name').val(),
+            "credit": $('#edit-credits').val(),
+            "task": "edit"
+        };
+        $.ajax({
+            url: "/update_admin_hospital",
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(item),
+            dataType: 'json',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (result) {
+                alert(result.responseText);
+            }
+        });
+    }
+
+    function edit(id, name, credits) {
+        to_edit = id;
+        $('#edit-hospital-name').text(name);
+        $('#edit-name').val(name);
+        $('#edit-credits').val(credits);
+        $('#edit').show();
+    }
+
+    function hideEditPage() {
+        $('#edit').hide();
+    }
+
+    // Setup all the bootstrap tooltips
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip({
+            animated: 'fade',
+            html: true
+        });
+    });
+</script>
 {% endblock %}
