@@ -3,27 +3,35 @@
 
 {{super()}}
 
-<script
-  src="https://code.jquery.com/jquery-3.4.1.js"
-  integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+<script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
   crossorigin="anonymous"></script>
 <!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+  integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
 <!-- Optional theme -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+  integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
 <!-- Latest compiled and minified JavaScript -->
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+  integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
-<link rel="stylesheet"href="{{url_for('.static', filename='style.css')}}">
+<link rel="stylesheet" href="{{url_for('.static', filename='style.css')}}">
 
 {% endblock %}
 
 {% block html_attribs %} lang="en"{% endblock %}
 
+{% set meta_description = 'An advanced site for ppe destribution in Washington State in the COVID-19 pandemic' %}
+
+{% block metas %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="{{ meta_description }}">
+{% endblock %}
+
 {% block title %}
-    {% if title %}{{ title }} - PPE-Exchange {% else %}Welcome to PPE-Exchange{% endif %}
+{% if title %}{{ title }} - PPE-Exchange {% else %}Welcome to PPE-Exchange{% endif %}
 {% endblock %}
 
 {% block navbar %}
@@ -31,7 +39,8 @@
 <nav class="navbar navbar-default" style="user-select: auto;">
   <div class="container-fluid" style="user-select: auto;">
     <div class="navbar-header" style="user-select: auto;">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar" style="user-select: auto;">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+        aria-expanded="false" aria-controls="navbar" style="user-select: auto;">
         <span class="sr-only" style="user-select: auto;">Toggle navigation</span>
         <span class="icon-bar" style="user-select: auto;"></span>
         <span class="icon-bar" style="user-select: auto;"></span>
@@ -42,41 +51,47 @@
     <div id="navbar" class="navbar-collapse collapse" style="user-select: auto;">
       <ul class="nav navbar-nav" style="user-select: auto;">
         <li style="user-select: auto;"><a href="{{ url_for('index') }}" style="user-select: auto; ">Home</a></li>
-        
-        
+
+
       </ul>
       <ul class="nav navbar-nav navbar-right" style="user-select: auto;">
-        <li style="user-select: auto;"><a href="{{ url_for('hospital_information') }}" style="user-select: auto; ">Hospital Information</a></li>
+        <li style="user-select: auto;"><a href="{{ url_for('hospital_information') }}"
+            style="user-select: auto; ">Hospital Information</a></li>
         <li class="dropdown" style="user-select: auto;">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="user-select: auto;">Edit Profile <span class="caret" style="user-select: auto;"></span></a>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+            aria-expanded="false" style="user-select: auto;">Edit Profile <span class="caret"
+              style="user-select: auto;"></span></a>
           <ul class="dropdown-menu" style="user-select: auto;">
-            <li style="user-select: auto;"><a href="{{ url_for('edit_user_profile') }}" style="user-select: auto;">Edit User Profile</a></li>
-            <li style="user-select: auto;"><a href="{{ url_for('edit_hospital_profile') }}" style="user-select: auto;">Edit Hospital Profile</a></li>
-            
-            
-            
+            <li style="user-select: auto;"><a href="{{ url_for('edit_user_profile') }}" style="user-select: auto;">Edit
+                User Profile</a></li>
+            <li style="user-select: auto;"><a href="{{ url_for('edit_hospital_profile') }}"
+                style="user-select: auto;">Edit Hospital Profile</a></li>
+
+
+
           </ul>
         </li>
         <li style="user-select: auto;"><a href="/logout" style="user-select: auto;">Logout</a></li>
       </ul>
-    </div><!--/.nav-collapse -->
-  </div><!--/.container-fluid -->
+    </div>
+    <!--/.nav-collapse -->
+  </div>
+  <!--/.container-fluid -->
 </nav>
 {% endblock %}
 
 {% block content %}
 <div class="container">
   {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for message in messages %}
-           <div class="alert alert-info" role="alert">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+  {% if messages %}
+  {% for message in messages %}
+  <div class="alert alert-info" role="alert">{{ message }}</div>
+  {% endfor %}
+  {% endif %}
+  {% endwith %}
 </div>
 
 {% block app_content %}
 {% endblock %}
 
 {% endblock %}
-
