@@ -20,18 +20,22 @@
     
     
     {% if hospitalInformation %}
+
+    <h3>{{hospitalInformation.name}}</h3>
+    <br>
+
     <h4>Hospital Address</h4>
     <p>{{hospitalInformation.name}}
         <br>
         {{hospitalInformation.street}},
         <br>
         {{hospitalInformation.city}}, {{hospitalInformation.state}}, {{hospitalInformation.zipcode}}
-        <br>
-        <h4>Hospital Users</h4>
-   
-    
+    </p>
+
+    <h4>Hospital Users</h4>
+    <p>
         {% for a in hospitalUsers %}
-            {{a.username}}: {{a.email}}
+            <b>{{a.username}}:</b> <a href="mailto:{{a.email}}">{{a.email}}</a>
             <br>
     {% endfor%}
     </p>
