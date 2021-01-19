@@ -580,6 +580,7 @@ def admin_hospitals():
 @app.route('/update_admin_hospital', methods=['GET', 'POST'])
 def update_admin_hospital():
     data = json.loads(request.get_data())
+    
     if not current_user.is_authenticated:
         return jsonify(target="login?next=admin_hospital")
     if data["task"] == "add":
@@ -599,6 +600,10 @@ def update_admin_hospital():
         record = q.first()
         record.name = data["name"]
         record.credit = data["credit"]
+        db.session.commit()
+    elif data["task"] == "clear":
+        db.session.query(Has).filter(Has.hospital_id == data["id"]).delete()
+        db.session.query(Wants).filter(Wants.hospital_id == data["id"]).delete()
         db.session.commit()
     return jsonify(target="index")
 
@@ -996,8 +1001,8 @@ def admin_create_exchange():
     # update tx hospital credits and exchange in d/b
     if len(exchanges) > 0:
         es = Exchanges()
-        eid = es.id
         db.session.add(es)
+
         # loop through created exchanges
         for exchange in exchanges:
             transfer = exchange["count"]
@@ -1007,7 +1012,7 @@ def admin_create_exchange():
             tx.credit += transfer
 
             # already handled udpdating want counts above
-            e = Exchange(exchange_id=es.id,hospital1=exchange["tx_hospital"],hospital2=exchange["rx_hospital"],ppe=exchange["ppe"],count=transfer)
+            e = Exchange(exchange_id=es.id, hospital1=exchange["tx_hospital"], hospital2=exchange["rx_hospital"], ppe=exchange["ppe"], count=transfer)
             db.session.add(e)
         db.session.commit()
         positive_credits_exchange = es    

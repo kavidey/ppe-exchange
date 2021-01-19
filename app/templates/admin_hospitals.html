@@ -20,6 +20,23 @@
     </div>
 </div>
 
+<div id="clear-check" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Clear PPE Confirmation</h2>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove <b>all</b> has/wants for <span id="clear-hospital-name"></span>?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="yes" class="btn btn-danger" onclick="clearHospital()">Yes</button>
+                <button id="no" class="btn btn-primary" onclick="hideClearCheck()">No</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="edit" class="modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -87,10 +104,12 @@
             </td>
             <td>{{ item.credit }} </td>
             <td>
-                <button class="btn btn-danger" id="remove"
-                    onclick="checkRemoveHospital('{{ item.id }}', '{{ item.name }}')">Remove</button>
-                <button id="edit" class="btn btn-primary"
+                <button class="btn btn-primary"
                     onclick="edit('{{ item.id }}', '{{ item.name }}', {{ item.credit }})">Edit</button>
+                <button type="button" class="btn btn-warning"
+                onclick="checkClearHospital('{{ item.id }}', '{{ item.name }}')">Clear PPE</button>
+                <button type="button" class="btn btn-danger"
+                    onclick="checkRemoveHospital('{{ item.id }}', '{{ item.name }}')">Remove</button>
             </td>
         </tr>
         {% endfor %}
@@ -111,10 +130,11 @@
 </div>
 <script>
     var to_remove = "";
+    var to_clear = "";
     var to_edit = "";
 
-
     $("#delete-check").hide()
+    $("#clear-check").hide()
     $("#edit").hide()
 
     function addHospital() {
@@ -157,6 +177,37 @@
         id = to_remove;
         item = {
             "task": "remove",
+            "id": id
+        }
+        $.ajax({
+            url: "/update_admin_hospital",
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(item),
+            dataType: 'json',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (result) {
+                alert(result.responseText);
+            }
+        });
+    }
+    
+    function checkClearHospital(id, name) {
+        $("#clear-check").show();
+        $("#clear-hospital-name").text(name);
+        to_clear = id;
+    }
+
+    function hideClearCheck() {
+        $("#clear-check").hide();
+    }
+
+    function clearHospital() {
+        id = to_clear;
+        item = {
+            "task": "clear",
             "id": id
         }
         $.ajax({
